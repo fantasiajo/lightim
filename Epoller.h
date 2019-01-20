@@ -12,13 +12,18 @@ public:
 	EPoller();
 	~Epoller();
 
-	int wait(int timeout);
+	int wait(std::vector<std::shared_ptr<IOEventManager>> &activeIOEM, int timeout);
 	void updateFdIOEM(std::shared_ptr<IOEventManager>);
+	void deleteFdIOEM(std::shared_ptr<IOEventManager>);
 private:
+	static int waittimeout;
+
 	int epoll_fd;
 	int event_fd;
 
 	struct epoll_event tmpev;
+	std::vector<struct epoll_event> evvec;
+	int numEvents;//wait 检测到的事件数目
 
 	std::unordered_map<int, std::shared_ptr<IOEventManager>> FdIOEM;
 };

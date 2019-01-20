@@ -25,6 +25,7 @@ private:
 	inline void add_task(Task &task);
 	void do_pending_task();
 
+	std::vector<std::shared_ptr<IOEventManager>> activeIOEM;
 	
 };
 #endif
