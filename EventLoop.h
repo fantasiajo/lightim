@@ -2,11 +2,13 @@
 #define EVENTLOOP_H
 
 #include "Epoller.h"
+#include "IOEventManager.h"
+#include "util.h"
 #include <vector>
 #include <functional>
 #include <mutex>
 
-class Task;
+typedef std::function<void()> Task;
 
 class EventLoop {
 public:
@@ -14,18 +16,24 @@ public:
 	~EventLoop();
 
 	void loop();
+
+	void updateIOEM(IOEventManager *pIOEM);
 private:
 
 	//成员变量
-	Epoller epoller;
+	std::shared_ptr<Epoller> pEpoller;
 	std::vector<Task> tasks;
 	std::mutex mtx_tasks;
+
+	int event_fd;
+	IOEventManager event_fd_ioem;
+	void readEventFd();
 
 	//成员函数
 	inline void add_task(Task &task);
 	void do_pending_task();
 
-	std::vector<std::shared_ptr<IOEventManager>> activeIOEM;
+	std::vector<IOEventManager *> activeIOEM;
 	
 };
 #endif

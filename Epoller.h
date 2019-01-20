@@ -12,9 +12,9 @@ public:
 	EPoller();
 	~Epoller();
 
-	int wait(std::vector<std::shared_ptr<IOEventManager>> &activeIOEM, int timeout);
-	void updateFdIOEM(std::shared_ptr<IOEventManager>);
-	void deleteFdIOEM(std::shared_ptr<IOEventManager>);
+	int wait(std::vector<IOEventManager *> &activeIOEM, int timeout);
+	void updateFdIOEM(IOEventManager *);
+	void deleteFdIOEM(IOEventManager *);
 private:
 	static int waittimeout;
 
@@ -23,9 +23,9 @@ private:
 
 	struct epoll_event tmpev;
 	std::vector<struct epoll_event> evvec;
-	int numEvents;//wait ¼ì²âµ½µÄÊÂ¼þÊýÄ¿
+	int numEvents;//wait æ£€æµ‹åˆ°çš„äº‹ä»¶æ•°ç›®
 
-	std::unordered_map<int, std::shared_ptr<IOEventManager>> FdIOEM;
+	std::unordered_map<int, IOEventManager *> FdIOEM;
 };
 
 #endif

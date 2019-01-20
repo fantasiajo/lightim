@@ -1,14 +1,38 @@
 #include "EventLoop.h"
 
-EventLoop::EventLoop() {}
+EventLoop::EventLoop()
+	:event_fd(createEventFd()),
+	event_fd_ioem(this,event_fd)
+{
+	event_fd_ioem.enableReading();
+	event_fd_ioem.setReadCallBack(readEventFd);
+}
 
 EventLoop::~EventLoop() {}
 
 void EventLoop::loop() {
 	while (true) {
+		int numEvents = pEpoller->wait(activeIOEM);
+
+		for (int i = 0; i < numEvents; ++i) {
+			activeIOEM[i]->handleEvent();
+		}
 		//epoller.wait();
 		//handle_result();
 		do_pending_task();
+	}
+}
+
+void EventLoop::updateIOEM(IOEventManager * pIOEM)
+{
+	pEpoller->updateFdIOEM(pIOEM);
+}
+
+void EventLoop::readEventFd()
+{
+	uint64_t n;
+	if (read(event_fd, &n, sizeof(n) != sizeof(n)) {
+		//log.err
 	}
 }
 
