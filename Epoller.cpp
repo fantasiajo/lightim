@@ -3,6 +3,7 @@
 #include "util.h"
 #include "IOEventManager.h"
 #include <iostream>
+#include <thread>
 
 int Epoller::waittimeout = 1;
 
@@ -36,6 +37,7 @@ int Epoller::wait(std::vector<IOEventManager *> &activeIOEM, int timeout /*= wai
 	activeIOEM.clear();
 	bool eventhappen = false;
 	for (int i = 0; i < numEvents; ++i) {
+		std::cout << std::this_thread::get_id() << " " << getpid() << " " << numEvents << " happen.\n";
 		activeIOEM.push_back(static_cast<IOEventManager *>(evvec[i].data.ptr));
 		activeIOEM.back()->setRecvEvents(evvec[i].events);
 	}
@@ -51,6 +53,7 @@ void Epoller::updateFdIOEM(IOEventManager* pIOEM) {
 		tmpev.data.ptr = pIOEM;
 		if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pIOEM->getfd(), &tmpev) == -1) {
 			std::cerr << "Add epoll fd failed.\n";
+			exit(1);
 		}
 		FdIOEM[pIOEM->getfd()] = pIOEM;
 	}

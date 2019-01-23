@@ -11,7 +11,7 @@ IOEventManager::IOEventManager(EventLoop *_ploop, int _fd)
 }
 
 IOEventManager::~IOEventManager() {
-
+	disableall();
 }
 
 int IOEventManager::getfd() {
@@ -64,6 +64,11 @@ void IOEventManager::disableReading() {
 void IOEventManager::disableWriting() {
 	events &= (~EPOLLOUT);
 	update();
+}
+
+void IOEventManager::disableall()
+{
+	ploop->deleteIOEM(this);
 }
 
 void IOEventManager::update() {

@@ -7,7 +7,7 @@ int createEventFd() {
 	int fd = eventfd(0, 0);
 	if (fd == -1) {
 		std::cerr << "Create eventfd failed." << std::endl;
-		abort();
+		exit(1);
 	}
 	return fd;
 }

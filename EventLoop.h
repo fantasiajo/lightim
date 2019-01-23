@@ -19,6 +19,7 @@ public:
 	void loop();
 
 	void updateIOEM(IOEventManager *pIOEM);
+	void deleteIOEM(IOEventManager *pIOEM);
 
 	void runInLoop(const Task &task);
 	bool isInLoopThread();

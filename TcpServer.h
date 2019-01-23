@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <memory>
-#include <unordered_set>
+#include <unordered_map>
 
 class EventLoop;
 class TcpConnection;
@@ -15,15 +15,16 @@ public:
 	
 	~TcpServer();
 
-	void init(EventLoop *_ploop, const char *ip, unsigned short port);
+	void init(EventLoop *_ploop, std::string , unsigned short port);
 	void start();
 
 	void newConnection(Socket &socket);
+	void closeConnection(int fd);
 
 private:
 	EventLoop *ploop;
 
-	std::unordered_set<std::shared_ptr<TcpConnection>> conSet;
+	std::unordered_map<int,std::shared_ptr<TcpConnection>> fd2TcpConn;
 	std::shared_ptr<Acceptor> pAcceptor;
 
 };

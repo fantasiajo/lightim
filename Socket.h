@@ -3,13 +3,16 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <string>
 
 class Socket {
 public:
+	enum SOCKET_TYPE{LISTENING_SOCKET,CONNECTION_SOCKET};
+	typedef in_addr IP;
+	typedef in_port_t Port;
 
 	Socket();
-	Socket(const Socket &);
-	Socket(const char *ip, unsigned short port);
+	Socket(std::string _ip, unsigned short _port);
 	~Socket();
 
 	void bind();
@@ -18,8 +21,11 @@ public:
 	void close();
 
 	int getSockfd () const;
-	struct in_addr getAddr() const;
-	in_port_t getPort() const;
+	std::string getAddr() const;
+	unsigned short getPort() const;
+	std::string getPeerAddr() const;
+	unsigned short getPeerPort() const;
+
 	int getBacklog() const;
 	int read(char *buffer, int length);
 	int readAbleNum();
@@ -27,7 +33,10 @@ public:
 
 private:
 	int sockfd;
-	struct in_addr addr;
-	in_port_t sin_port;
+	SOCKET_TYPE type;
+	IP addr;
+	Port port;
+	IP peerAddr;
+	Port peerPort;
 	int backlog = 10;
 };

@@ -17,6 +17,7 @@ public:
 	void connectionEstablished(std::shared_ptr<TcpConnection>);
 
 	void setMsgCallBack(const std::function<void()>&);
+	void setCloseCallBack(const std::function<void(int)> &);
 
 	void sendInLoop(const char *buf, int len);
 	void send(const char*buf, int len);
@@ -33,7 +34,6 @@ private:
 
 	Buffer inbuffer;
 	Buffer outbuffer;
-	char buf[65536];
 
 	void handleRead();
 	void handleWrite();
@@ -41,6 +41,7 @@ private:
 	void handleClose();
 
 	std::function<void()> msgCallBack;
+	std::function<void(int)> closeCallBack;
 
 	
 };

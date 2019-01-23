@@ -2,6 +2,7 @@
 #include "IOEventManager.h"
 #include "Epoller.h"
 #include "unistd.h"
+#include <iostream>
 
 EventLoop::EventLoop()
 	:tid(std::this_thread::get_id()),
@@ -31,11 +32,17 @@ void EventLoop::updateIOEM(IOEventManager * pIOEM)
 	pEpoller->updateFdIOEM(pIOEM);
 }
 
+void EventLoop::deleteIOEM(IOEventManager * pIOEM)
+{
+	pEpoller->deleteFdIOEM(pIOEM);
+}
+
 void EventLoop::readEventFd()
 {
 	uint64_t n;
-	if (read(event_fd, &n, sizeof(n) != sizeof(n))) {
-		//log.err
+	if (read(event_fd, &n, sizeof(n)) != sizeof(n)) {
+		std::cerr << "read eventfd fail" << std::endl;
+		std::cerr << errno << std::endl;
 	}
 }
 
@@ -43,7 +50,8 @@ void EventLoop::writeEventFd()
 {
 	uint64_t n = 1;
 	if (write(event_fd, &n, sizeof(n)) != sizeof(n)) {
-		//log.err
+		std::cerr << "write eventfd fail" << std::endl;
+		std::cerr << errno << std::endl;
 	}
 }
 

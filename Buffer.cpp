@@ -3,7 +3,7 @@
 Buffer::Buffer()
 	:readIndex(0),writeIndex(0)
 {
-
+	str.resize(10);
 }
 
 Buffer::~Buffer() {
@@ -26,7 +26,9 @@ void Buffer::in(const char *buf, int len) {
 	while (leftSpace() < len) {
 		str.resize(str.size() * 2);
 	}
-	str[writeIndex++] = *(buf++);
+	while (len--) {
+		str[writeIndex++] = *(buf++);
+	}
 }
 
 void Buffer::out(char *buf, int len) {

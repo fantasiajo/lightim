@@ -10,6 +10,7 @@ int main() {
 	Singleton<EventLoopThreadManager>::instance().newEventLoopThread(4);
 	Singleton<TcpServer>::instance().init(&loop, "0.0.0.0", 4399);
 	Singleton<TcpServer>::instance().start();
+	TcpServer *pServer = &Singleton<TcpServer>::instance();
 	loop.loop();
 	return 0;
 }

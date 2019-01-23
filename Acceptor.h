@@ -9,8 +9,7 @@ class IOEventManager;
 
 class Acceptor {
 public:
-	Acceptor();
-	Acceptor(EventLoop *_ploop,const char *ip, unsigned short port);
+	Acceptor(EventLoop *_ploop,std::string ip, unsigned short port);
 
 	~Acceptor();
 
@@ -23,8 +22,10 @@ public:
 private:
 	EventLoop *ploop;
 
-	std::shared_ptr<IOEventManager> pIOEM;
 	Socket lisfd;
+
+	std::shared_ptr<IOEventManager> pIOEM;
+	
 
 	std::function<void(Socket&)> newConnectionCallBack;
 };

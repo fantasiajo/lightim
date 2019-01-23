@@ -5,38 +5,34 @@
 #include "arpa/inet.h"
 #include "unistd.h"
 
+
 Socket::Socket()
 {
 }
 
-Socket::Socket(const char * ip, unsigned short port)
+Socket::Socket(std::string _ip, unsigned short _port)
 	:sockfd(socket(AF_INET,SOCK_STREAM | O_NONBLOCK,0))
 {
 	if (sockfd == -1) {
-		//log.err
+		std::cerr << "socket create failed.\n";
 	}
 
 	int optval = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
 		//log.err
+		exit(1);
 	}
-	int status = inet_pton(AF_INET, ip, &addr);
+	int status = inet_pton(AF_INET, _ip.c_str(), &addr);
 	if (status == -1) {
 		//log.err
+		exit(1);
 	}
 	if (status == 0) {
 		//log.err.ipcharformat
+		exit(1);
 	}
-	sin_port = port;
-}
-
-Socket::Socket(const Socket &socket)
-	:sockfd(socket.getSockfd()),
-	addr(socket.getAddr()),
-	sin_port(socket.getPort()),
-	backlog(socket.getBacklog())
-{
-
+	port = htons(_port);
+	type = LISTENING_SOCKET;
 }
 
 Socket::~Socket()
@@ -46,7 +42,7 @@ Socket::~Socket()
 void Socket::bind() {
 	struct sockaddr_in sockaddr;
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_port = htons(sin_port);
+	sockaddr.sin_port = port;
 	sockaddr.sin_addr = addr;
 	if (::bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == -1) {
 		std::cerr << "bind failed.\n";
@@ -65,15 +61,29 @@ void Socket::listen()
 }
 
 Socket Socket::accept() {
-	struct sockaddr_in tmpsockaddr;
-	int tmpfd = ::accept4(sockfd, (struct sockaddr *)&tmpsockaddr,nullptr,SOCK_NONBLOCK);
+	int tmpfd = ::accept4(sockfd,NULL,0, SOCK_NONBLOCK);
 	if (tmpfd == -1) {
-		//log.err
+		perror("accept4");
+		fflush(stderr);
+		exit(1);
 	}
+
+	struct sockaddr_in sockaddr;
+	socklen_t len=sizeof(sockaddr_in);
+
+	if (getpeername(tmpfd, (struct sockaddr *)&sockaddr, &len) == -1) {
+		std::cout << "getpeername" << std::endl;
+		exit(1);
+	}
+
 	Socket socket;
+	socket.type = CONNECTION_SOCKET;
 	socket.sockfd = tmpfd;
-	socket.addr = tmpsockaddr.sin_addr;
-	socket.sin_port = tmpsockaddr.sin_port;
+	socket.addr = addr;
+	socket.port = port;
+	socket.peerAddr = sockaddr.sin_addr;
+	socket.peerPort = sockaddr.sin_port;
+	
 	return socket;
 }
 
@@ -86,12 +96,34 @@ int Socket::getSockfd() const{
 	return sockfd;
 }
 
-struct in_addr Socket::getAddr() const{
-	return addr;
+std::string Socket::getAddr() const{
+	char ip[INET_ADDRSTRLEN];
+	const char *ans = inet_ntop(AF_INET, &addr, ip, sizeof(ip));
+	if (!ans) {
+		std::cout << "inet_ntop" << std::endl;
+		exit(1);
+	}
+	return std::string(ans);
 }
 
-in_port_t Socket::getPort() const{
-	return sin_port;
+unsigned short Socket::getPort() const{
+	return ntohs(port);
+}
+
+std::string Socket::getPeerAddr() const
+{
+	char ip[INET_ADDRSTRLEN];
+	const char *ans = inet_ntop(AF_INET, &peerAddr, ip, sizeof(ip));
+	if (!ans) {
+		std::cout << "inet_ntop" << std::endl;
+		exit(1);
+	}
+	return std::string(ans);
+}
+
+unsigned short Socket::getPeerPort() const
+{
+	return ntohs(peerPort);
 }
 
 int Socket::getBacklog() const{

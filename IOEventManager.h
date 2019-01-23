@@ -26,13 +26,14 @@ public:
 	void enableWriting();
 	void disableReading();
 	void disableWriting();
+	void disableall();
 	void update();
 
 	void handleEvent();
 
 	std::string type;
 	std::string ip;
-	std::string port;
+	unsigned short port;
 
 private:
 	EventLoop *ploop;

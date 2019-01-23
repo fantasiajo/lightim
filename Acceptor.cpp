@@ -1,15 +1,12 @@
 #include "Acceptor.h"
 #include "IOEventManager.h"
 
-Acceptor::Acceptor()
-{
-}
-
-Acceptor::Acceptor(EventLoop *_ploop,const char * ip, unsigned short port)
+Acceptor::Acceptor(EventLoop *_ploop,std::string ip, unsigned short port)
 	:ploop(_ploop),
 	lisfd(ip,port),
-	pIOEM(new IOEventManager(_ploop,lisfd.getSockfd()))
+	pIOEM()
 {
+	pIOEM.reset(new IOEventManager(_ploop, lisfd.getSockfd()));
 	pIOEM->type = "Acceptor";
 	pIOEM->setReadCallBack(std::bind(&Acceptor::accept,this));
 }

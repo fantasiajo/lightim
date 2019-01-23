@@ -4,19 +4,19 @@
 #include "TcpConnection.h"
 #include "TcpSession.h"
 #include <string>
-
+#include <iostream>
 TcpConnection::TcpConnection()
 {
 }
 
 TcpConnection::TcpConnection(EventLoop *_ploop, Socket _fd)
 	:ploop(_ploop),
-	confd(_fd),
-	pIOEM(new IOEventManager(_ploop,confd.getSockfd()))
+	confd(_fd)
 {
+	pIOEM.reset(new IOEventManager(_ploop, confd.getSockfd()));
 	pIOEM->type = "TcpConnection";
-	pIOEM->ip = std::to_string(confd.getAddr().s_addr);
-	pIOEM->port = std::to_string(confd.getPort());
+	pIOEM->ip = confd.getPeerAddr();
+	pIOEM->port = confd.getPeerPort();
 	pIOEM->setReadCallBack(std::bind(&TcpConnection::handleRead,this));
 	pIOEM->setWriteCallBack(std::bind(&TcpConnection::handleWrite, this));
 }
@@ -32,6 +32,11 @@ void TcpConnection::connectionEstablished(std::shared_ptr<TcpConnection> pTcpCon
 void TcpConnection::setMsgCallBack(const std::function<void()> &cb)
 {
 	msgCallBack = cb;
+}
+
+void TcpConnection::setCloseCallBack(const std::function<void(int)>& cb)
+{
+	closeCallBack = cb;
 }
 
 void TcpConnection::sendInLoop(const char *buf, int len) {
@@ -83,4 +88,6 @@ void TcpConnection::handleError()
 void TcpConnection::handleClose()
 {
 	confd.close();
+	std::cerr << confd.getPeerAddr() + ":" << confd.getPeerPort() << " leaves."<< std::endl;
+	closeCallBack(confd.getSockfd());
 }
