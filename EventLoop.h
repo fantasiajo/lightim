@@ -1,14 +1,15 @@
-#ifndef EVENTLOOP_H
-#define EVENTLOOP_H
+#pragma once
 
-#include "Epoller.h"
-#include "IOEventManager.h"
 #include "util.h"
 #include <vector>
 #include <functional>
 #include <mutex>
+#include <thread>
 
 typedef std::function<void()> Task;
+
+class Epoller;
+class IOEventManager;
 
 class EventLoop {
 public:
@@ -18,22 +19,32 @@ public:
 	void loop();
 
 	void updateIOEM(IOEventManager *pIOEM);
+
+	void runInLoop(const Task &task);
+	bool isInLoopThread();
+	void queueInLoop(const Task &task);
 private:
 
 	//成员变量
+	std::thread::id tid;
+
 	std::shared_ptr<Epoller> pEpoller;
 	std::vector<Task> tasks;
 	std::mutex mtx_tasks;
 
 	int event_fd;
-	IOEventManager event_fd_ioem;
+	std::shared_ptr<IOEventManager> event_fd_ioem;
 	void readEventFd();
+	void writeEventFd();
 
 	//成员函数
-	inline void add_task(Task &task);
+	
+
+	
+	
+	void wakeup();
+
 	void do_pending_task();
 
 	std::vector<IOEventManager *> activeIOEM;
-	
 };
-#endif

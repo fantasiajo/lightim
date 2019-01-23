@@ -1,25 +1,24 @@
-#ifndef EPOLLER_H
-#define EPOLLER_H
+#pragma once
 
-#include <sys/epoll.h>
-#include <sys/eventfd.h>
+#include <vector>
 #include <unordered_map>
-#include <memory>
-#include "IOEventManager.h"
+#include <sys/epoll.h>
+
+class IOEventManager;
 
 class Epoller {
+private:
+	static int waittimeout;
 public:
-	EPoller();
+	Epoller();
 	~Epoller();
 
-	int wait(std::vector<IOEventManager *> &activeIOEM, int timeout);
+	int wait(std::vector<IOEventManager *> &activeIOEM, int timeout = waittimeout);
 	void updateFdIOEM(IOEventManager *);
 	void deleteFdIOEM(IOEventManager *);
 private:
-	static int waittimeout;
 
 	int epoll_fd;
-	int event_fd;
 
 	struct epoll_event tmpev;
 	std::vector<struct epoll_event> evvec;
@@ -28,4 +27,3 @@ private:
 	std::unordered_map<int, IOEventManager *> FdIOEM;
 };
 
-#endif

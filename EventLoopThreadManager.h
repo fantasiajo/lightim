@@ -1,23 +1,25 @@
-#ifndef EventLoopThreadMANAGER_H
-#define EventLoopThreadMANAGER_H
+#pragma once
 
 #include <vector>
 #include <memory>
+#include <mutex>
 #include "ThreadManager.h"
 #include "Singleton.h"
-#include "EventLoop.h"
+
+class EventLoop;
 
 class EventLoopThreadManager {
 public:
-	EventLoopThreadManager();
-	~EventLoopThreadManager();
+//	EventLoopThreadManager();
+//	~EventLoopThreadManager();
 
 	void newEventLoopThread(int num);
-	std::shared_ptr<EventLoop> getNextEventLoop();
+	EventLoop *getNextEventLoop();
 
 private:
 	std::vector<std::shared_ptr<EventLoop>> ploops;
+	std::mutex mtx_ploops;
 	static int next;
-};
 
-#endif
+	void threadFun();
+};

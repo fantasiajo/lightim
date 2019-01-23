@@ -1,5 +1,4 @@
-#ifndef SINGLETON_H
-#define SINGLETON_H
+#pragma once 
 
 #include <memory>
 
@@ -11,7 +10,7 @@ public:
 
 	static T& instance() {
 		if (!pT) {
-			pT = new T();
+			pT.reset(new T());
 		}
 		return *pT;
 	}
@@ -19,4 +18,6 @@ private:
 	static std::shared_ptr<T> pT;
 };
 
-#endif
+template <typename T>
+std::shared_ptr<T> Singleton<T>::pT;
+

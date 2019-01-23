@@ -1,8 +1,7 @@
 #include "IOEventManager.h"
-
-IOEventManager::IOEventManager() {
-
-}
+#include <sys/epoll.h>
+#include "EventLoop.h"
+#include <iostream>
 
 IOEventManager::IOEventManager(EventLoop *_ploop, int _fd)
 	:ploop(_ploop),
@@ -23,7 +22,7 @@ uint32_t IOEventManager::getEvents() {
 	return events;
 }
 
-inline void IOEventManager::setRecvEvents(uint32_t events)
+void IOEventManager::setRecvEvents(uint32_t events)
 {
 	recvEvents = events;
 }
@@ -54,7 +53,8 @@ void IOEventManager::enableReading() {
 }
 
 void IOEventManager::enableWriting() {
-
+	events |= EPOLLOUT;
+	update();
 }
 
 void IOEventManager::disableReading() {
@@ -62,7 +62,8 @@ void IOEventManager::disableReading() {
 }
 
 void IOEventManager::disableWriting() {
-
+	events &= (~EPOLLOUT);
+	update();
 }
 
 void IOEventManager::update() {
@@ -77,6 +78,7 @@ void IOEventManager::handleEvent() {
 		errorCallBack();
 	}
 	if (recvEvents & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
+		std::cout << type+" "+ip+":" << port << std::endl;
 		readCallBack();
 	}
 	if (recvEvents & EPOLLOUT) {

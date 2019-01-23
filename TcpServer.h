@@ -1,20 +1,24 @@
-#ifndef TCPSERVER_H
-#define TCPSERVER_H
+#pragma once
 
 #include <vector>
 #include <memory>
 #include <unordered_set>
-#include "TcpConnection.h"
-#include "Acceptor.h"
-#include "EventLoop.h"
+
+class EventLoop;
+class TcpConnection;
+class Acceptor;
+class Socket;
 
 class TcpServer {
 public:
 	TcpServer();
-	TcpServer(EventLoop *_ploop,const char *ip, short port);
+	
 	~TcpServer();
 
+	void init(EventLoop *_ploop, const char *ip, unsigned short port);
 	void start();
+
+	void newConnection(Socket &socket);
 
 private:
 	EventLoop *ploop;
@@ -24,4 +28,3 @@ private:
 
 };
 
-#endif

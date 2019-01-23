@@ -1,9 +1,9 @@
-#ifndef THREADMANAGER_H
-#define THREADMANAGER_H
+#pragma once
 
 #include <thread>
 #include <vector>
 #include <memory>
+#include <functional>
 
 class ThreadManager {
 public:
@@ -18,4 +18,3 @@ private:
 	std::vector<std::shared_ptr<std::thread>> pthreads;
 };
 
-#endif

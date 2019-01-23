@@ -1,20 +1,21 @@
-#ifndef IOEVENTMANAGER_H
-#define IOEVENTMANAGER_H
+#pragma once
 
 #include <functional>
-#include "EventLoop.h"
+
+class EventLoop;
 
 class IOEventManager {
 public:
-	IOEventManager();
-	IOEventManager(EventLoop *_ploop);
+	typedef std::function<void()> EventCallBack;
+
+	IOEventManager(EventLoop *_ploop, int _fd);
 	~IOEventManager();
 
-	inline int getfd();
+	int getfd();
 
-	inline uint32_t getEvents();
+	uint32_t getEvents();
 
-	inline void setRecvEvents(uint32_t events);
+	void setRecvEvents(uint32_t events);
 
 	void setReadCallBack(const EventCallBack & cb);
 	void setWriteCallBack(const EventCallBack & cb);
@@ -29,9 +30,11 @@ public:
 
 	void handleEvent();
 
-private:
-	typedef std::function<void()> EventCallBack;
+	std::string type;
+	std::string ip;
+	std::string port;
 
+private:
 	EventLoop *ploop;
 
 	const int fd;
@@ -43,6 +46,6 @@ private:
 	uint32_t events = 0;
 	uint32_t recvEvents = 0;
 
+	
 };
 
-#endif

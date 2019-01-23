@@ -1,11 +1,16 @@
 #include "EventLoop.h"
+#include "IOEventManager.h"
+#include "Epoller.h"
+#include "unistd.h"
 
 EventLoop::EventLoop()
-	:event_fd(createEventFd()),
-	event_fd_ioem(this,event_fd)
+	:tid(std::this_thread::get_id()),
+	pEpoller(new Epoller()),
+	event_fd(createEventFd()),
+	event_fd_ioem(new IOEventManager(this, event_fd))
 {
-	event_fd_ioem.enableReading();
-	event_fd_ioem.setReadCallBack(readEventFd);
+	event_fd_ioem->enableReading();
+	event_fd_ioem->setReadCallBack(std::bind(&EventLoop::readEventFd,this));
 }
 
 EventLoop::~EventLoop() {}
@@ -13,12 +18,10 @@ EventLoop::~EventLoop() {}
 void EventLoop::loop() {
 	while (true) {
 		int numEvents = pEpoller->wait(activeIOEM);
-
+		
 		for (int i = 0; i < numEvents; ++i) {
 			activeIOEM[i]->handleEvent();
 		}
-		//epoller.wait();
-		//handle_result();
 		do_pending_task();
 	}
 }
@@ -31,22 +34,51 @@ void EventLoop::updateIOEM(IOEventManager * pIOEM)
 void EventLoop::readEventFd()
 {
 	uint64_t n;
-	if (read(event_fd, &n, sizeof(n) != sizeof(n)) {
+	if (read(event_fd, &n, sizeof(n) != sizeof(n))) {
 		//log.err
 	}
 }
 
-void EventLoop::add_task(Task &task) {
+void EventLoop::writeEventFd()
+{
+	uint64_t n = 1;
+	if (write(event_fd, &n, sizeof(n)) != sizeof(n)) {
+		//log.err
+	}
+}
+
+bool EventLoop::isInLoopThread()
+{
+	return tid == std::this_thread::get_id();
+}
+
+void EventLoop::runInLoop(const Task &task) {
+	if (isInLoopThread()) {
+		if (task)
+			task();
+	}
+	else {
+		queueInLoop(task);
+	}
+}
+
+void EventLoop::queueInLoop(const Task & task)
+{
 	mtx_tasks.lock();
 	tasks.push_back(task);
 	mtx_tasks.unlock();
+	wakeup();
+}
+
+void EventLoop::wakeup() {
+	writeEventFd();
 }
 
 void EventLoop::do_pending_task() {
 	std::vector<Task> tmptasks;
 
 	mtx_tasks.lock();
-	std::swap(tmpstasks, tasks);
+	std::swap(tmptasks, tasks);
 	mtx_tasks.unlock();
 
 	for (const auto &task : tmptasks) {
