@@ -19,7 +19,6 @@ EventLoop::~EventLoop() {}
 void EventLoop::loop() {
 	while (true) {
 		int numEvents = pEpoller->wait(activeIOEM);
-		
 		for (int i = 0; i < numEvents; ++i) {
 			activeIOEM[i]->handleEvent();
 		}

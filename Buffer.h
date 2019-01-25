@@ -17,6 +17,11 @@ public:
 	void out(char* buf, int len);
 	//void recycleSpace();
 
+	uint16_t peekUint16();
+	uint16_t getUint16();
+
+	uint8_t getUint8();
+
 	int readin(Socket &socket, int len);
 
 	int writeout(Socket socket);

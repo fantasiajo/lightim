@@ -39,10 +39,6 @@ private:
 	void writeEventFd();
 
 	//成员函数
-	
-
-	
-	
 	void wakeup();
 
 	void do_pending_task();

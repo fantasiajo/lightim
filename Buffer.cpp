@@ -37,6 +37,23 @@ void Buffer::out(char *buf, int len) {
 	}
 }
 
+uint16_t Buffer::peekUint16()
+{
+	return ::ntohs(*((uint16_t *)(&str[readIndex])));
+}
+
+uint16_t Buffer::getUint16()
+{
+	uint16_t n = peekUint16();
+	readIndex += sizeof(uint16_t);
+	return n;
+}
+
+uint8_t Buffer::getUint8()
+{
+	return *((uint8_t*)(&str[readIndex++]));
+}
+
 int Buffer::readin(Socket &socket, int len) {
 	while (leftSpace() < len) {
 		str.resize(str.size() * 2);

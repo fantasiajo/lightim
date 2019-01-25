@@ -14,4 +14,11 @@ public:
 	//void send(const char *buf, int len);
 private:
 	std::weak_ptr<TcpConnection> tmpPTcpConnection;
+
+	void handleSignUp();//|nickname 4 bytes|md5passwd 32 bytes|
+	void handleLoginIn();
+	void handleShowSb();
+	void handleAddSb();
+	void handleDeleteSb();
+	void handleToSb();
 };

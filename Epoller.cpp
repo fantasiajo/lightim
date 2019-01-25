@@ -2,7 +2,7 @@
 #include "unistd.h"
 #include "util.h"
 #include "IOEventManager.h"
-#include <iostream>
+#include "easylogging++.h"
 #include <thread>
 
 int Epoller::waittimeout = 1;
@@ -21,18 +21,18 @@ int Epoller::wait(std::vector<IOEventManager *> &activeIOEM, int timeout /*= wai
 	numEvents = ::epoll_wait(epoll_fd, &evvec[0], static_cast<int>(evvec.size()), timeout);
 	if (numEvents == -1) {
 		if (errno == EBADF) {
-			std::cerr << "epfd not valid.\n";
+			LOG(ERROR) << "epfd not valid.";
 		}
 		if (errno == EFAULT) {
-			std::cerr << "Write forbidden.\n";
+			LOG(ERROR) << "Write forbidden.";
 		}
 		if (errno == EINTR) {
-			std::cerr << "Interrupted.\n";
+			LOG(ERROR) << "Interrupted.";
 		}
 		if (errno == EINVAL) {
-			std::cerr << "hehe.\n";
+			LOG(ERROR) << "hehe.";
 		}
-		std::cerr << "epoll_wait failed." << std::endl;
+		LOG(ERROR) << "epoll_wait failed.";
 	}
 	activeIOEM.clear();
 	bool eventhappen = false;
@@ -52,7 +52,7 @@ void Epoller::updateFdIOEM(IOEventManager* pIOEM) {
 		tmpev.events = pIOEM->getEvents();
 		tmpev.data.ptr = pIOEM;
 		if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pIOEM->getfd(), &tmpev) == -1) {
-			std::cerr << "Add epoll fd failed.\n";
+			LOG(ERROR) << "epoll_ctl add " << pIOEM->getfd() << "failed.";
 			exit(1);
 		}
 		FdIOEM[pIOEM->getfd()] = pIOEM;
@@ -61,7 +61,8 @@ void Epoller::updateFdIOEM(IOEventManager* pIOEM) {
 		tmpev.events = pIOEM->getEvents();
 		tmpev.data.ptr = pIOEM;
 		if (::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, pIOEM->getfd(), &tmpev) == -1) {
-			//log.err << epoll_ctl
+			LOG(ERROR) << "epoll_ctl add " << pIOEM->getfd() << "failed.";
+			exit(1);
 		}
 	}
 }

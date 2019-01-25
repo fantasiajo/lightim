@@ -1,5 +1,7 @@
 #pragma once
+#include "Buffer.h"
 
+//Msg:|len 2 bytes|MSG_TYPE 1 bytes|data len-3 bytes|
 class Msg {
 public:
 	enum MSG_TYPE {
@@ -16,7 +18,10 @@ public:
 		TO_SB,
 		FROM_SB
 	};
+	const static int headerLen = 3;
 private:
 	MSG_TYPE type;
 	uint16_t len;
+	
 };
+
