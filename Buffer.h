@@ -22,6 +22,8 @@ public:
 
 	uint8_t getUint8();
 
+	std::string getString(int len);
+
 	int readin(Socket &socket, int len);
 
 	int writeout(Socket socket);

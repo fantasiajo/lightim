@@ -54,6 +54,13 @@ uint8_t Buffer::getUint8()
 	return *((uint8_t*)(&str[readIndex++]));
 }
 
+std::string Buffer::getString(int len)
+{
+	auto tmp = readIndex;
+	readIndex += len;
+	return std::string(&str[tmp],len);
+}
+
 int Buffer::readin(Socket &socket, int len) {
 	while (leftSpace() < len) {
 		str.resize(str.size() * 2);

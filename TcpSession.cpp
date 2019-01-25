@@ -1,9 +1,13 @@
 #include "TcpSession.h"
 #include "TcpConnection.h"
+#include "EventLoop.h"
 #include "Msg.h"
+#include "UserManager.h"
+#include "easylogging++.h"
 
-TcpSession::TcpSession(std::shared_ptr<TcpConnection> pTcpCon)
-	:tmpPTcpConnection(pTcpCon)
+TcpSession::TcpSession(EventLoop *_ploop,std::shared_ptr<TcpConnection> pTcpCon)
+	:ploop(_ploop),
+	tmpPTcpConnection(pTcpCon)
 {
 }
 
@@ -37,7 +41,9 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 
 	switch (type) {
 	case Msg::MSG_TYPE::SIGN_UP:
-		handleSignUp();
+		LOG(INFO) << "SIGN_UP from" << tmpPTcpConnection.lock()->getfd().getPeerAddr()
+			<< ": " << tmpPTcpConnection.lock()->getfd().getPeerPort();
+		handleSignUp(pBuffer);
 		break;
 	case Msg::MSG_TYPE::LOGIN_IN:
 		handleLoginIn();
@@ -59,8 +65,41 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 	};
 }
 
-void TcpSession::handleSignUp()
+
+void TcpSession::handleSignUp(Buffer *pBuffer)
 {
+	std::string nickname = pBuffer->getString(32);
+	std::string password = pBuffer->getString(32);
+	if (UserManager::addUser(ploop,nickname, password)) {
+		std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::SIGN_UP_ANS));
+		pMsg->writeUint8(SUCCESS);
+		LOG(INFO) << "SIGN_UP from" << tmpPTcpConnection.lock()->getfd().getPeerAddr()
+			<< ": " << tmpPTcpConnection.lock()->getfd().getPeerPort() << "success." << nickname << ":" << password;
+		if (!tmpPTcpConnection.expired()) {
+			tmpPTcpConnection.lock()->sendInLoop(pMsg);
+		}
+	}
+	else {
+		std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::SIGN_UP_ANS));
+		pMsg->writeUint8(FAIL);
+		LOG(INFO) << "SIGN_UP from" << tmpPTcpConnection.lock()->getfd().getPeerAddr()
+			<< ": " << tmpPTcpConnection.lock()->getfd().getPeerPort() << "fail." << nickname << ":" << password;
+		if (!tmpPTcpConnection.expired()) {
+			tmpPTcpConnection.lock()->sendInLoop(pMsg);
+		}
+	}
+	//if (UserManager::exists(nickname)) {
+	//	std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen+1,Msg::MSG_TYPE::SIGN_UP_ANS));
+	//	pMsg->writeUint8(FAIL);
+	//	if (!tmpPTcpConnection.expired()) {
+	//		tmpPTcpConnection.lock()->sendInLoop(pMsg);
+	//	}
+	//}
+	//else {
+	//	std::string password = pBuffer->getString(32);
+	//	UserManager::addUser(nickname, password);
+	//}
+	
 }
 
 void TcpSession::handleLoginIn()

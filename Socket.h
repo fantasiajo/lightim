@@ -20,6 +20,8 @@ public:
 	Socket accept();
 	void close();
 
+	int connect(std::string ip, unsigned short _port);
+
 	int getSockfd () const;
 	std::string getAddr() const;
 	unsigned short getPort() const;
@@ -30,6 +32,7 @@ public:
 	int read(char *buffer, int length);
 	int readAbleNum();
 	int write(const char *buffer, int length);
+	int writen(const char *buffer, int length);
 
 private:
 	int sockfd;

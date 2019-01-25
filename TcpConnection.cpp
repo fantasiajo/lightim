@@ -3,6 +3,7 @@
 #include "IOEventManager.h"
 #include "TcpConnection.h"
 #include "TcpSession.h"
+#include "Msg.h"
 #include <string>
 #include <iostream>
 TcpConnection::TcpConnection()
@@ -23,7 +24,7 @@ TcpConnection::TcpConnection(EventLoop *_ploop, Socket _fd)
 
 void TcpConnection::connectionEstablished(std::shared_ptr<TcpConnection> pTcpCon)
 {
-	pTcpSession.reset(new TcpSession(pTcpCon));
+	pTcpSession.reset(new TcpSession(ploop,pTcpCon));
 	setMsgCallBack(std::bind(&TcpSession::handleMsg,
 		pTcpSession.get(), &inbuffer));
 	pIOEM->enableReading();
@@ -52,6 +53,24 @@ void TcpConnection::send(const char * buf, int len)
 {
 	outbuffer.in(buf, len);
 	pIOEM->enableWriting();
+}
+
+void TcpConnection::sendInLoop(std::shared_ptr<Msg> pMsg) {
+	if (ploop->isInLoopThread()) {
+		sendMsg(pMsg);
+	}
+	else {
+		ploop->queueInLoop(std::bind(&TcpConnection::sendMsg, this, pMsg));
+	}
+}
+
+void TcpConnection::sendMsg(std::shared_ptr<Msg> pMsg) {
+	send(pMsg->getBuf(), pMsg->getLen());
+}
+
+TcpConnection::~TcpConnection()
+{
+	ploop->deleteIOEM(pIOEM.get());
 }
 
 void TcpConnection::handleRead()

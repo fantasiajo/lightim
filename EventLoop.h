@@ -8,6 +8,7 @@
 
 typedef std::function<void()> Task;
 
+class DB;
 class Epoller;
 class IOEventManager;
 
@@ -24,10 +25,16 @@ public:
 	void runInLoop(const Task &task);
 	bool isInLoopThread();
 	void queueInLoop(const Task &task);
+
+	DB *getDb() {
+		return pDb.get();
+	}
 private:
 
 	//成员变量
 	std::thread::id tid;
+
+	std::shared_ptr<DB> pDb;
 
 	std::shared_ptr<Epoller> pEpoller;
 	std::vector<Task> tasks;

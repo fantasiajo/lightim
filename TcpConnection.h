@@ -8,11 +8,18 @@
 class TcpSession;
 class IOEventManager;
 class EventLoop;
+class Msg;
 
 class TcpConnection {
 public:
 	TcpConnection();
 	TcpConnection(EventLoop *_ploop, Socket _fd);
+	~TcpConnection();
+	//通知负责该连接的epoller，delete ioem
+
+	Socket getfd() {
+		return confd;
+	}
 
 	void connectionEstablished(std::shared_ptr<TcpConnection>);
 
@@ -21,16 +28,17 @@ public:
 
 	void sendInLoop(const char *buf, int len);
 	void send(const char*buf, int len);
-	~TcpConnection() {
-		//通知负责该连接的epoller，delete ioem
-	}
+	void sendInLoop(std::shared_ptr<Msg> pMsg);
+	void sendMsg(std::shared_ptr<Msg> pMsg);
+	
+
 private:
 	EventLoop *ploop;
 
 	Socket confd;
 
 	std::shared_ptr<IOEventManager> pIOEM;
-	std::shared_ptr<TcpSession> pTcpSession;
+	std::shared_ptr<TcpSession> pTcpSession;//需要改动，tcpconnection不能主导tcpsession的生命周期
 
 	Buffer inbuffer;
 	Buffer outbuffer;

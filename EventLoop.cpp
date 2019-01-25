@@ -2,13 +2,15 @@
 #include "IOEventManager.h"
 #include "Epoller.h"
 #include "unistd.h"
+#include "DB.h"
 #include <iostream>
 
 EventLoop::EventLoop()
 	:tid(std::this_thread::get_id()),
 	pEpoller(new Epoller()),
 	event_fd(createEventFd()),
-	event_fd_ioem(new IOEventManager(this, event_fd))
+	event_fd_ioem(new IOEventManager(this, event_fd)),
+	pDb(new DB(HOST,USER,PWD,DB_NAME))
 {
 	event_fd_ioem->enableReading();
 	event_fd_ioem->setReadCallBack(std::bind(&EventLoop::readEventFd,this));
