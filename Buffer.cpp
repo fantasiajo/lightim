@@ -49,6 +49,13 @@ uint16_t Buffer::getUint16()
 	return n;
 }
 
+uint32_t Buffer::getUint32()
+{
+	auto tmp = readIndex;
+	readIndex += sizeof(uint32_t);
+	return ::ntohs(*((uint32_t *)(&str[tmp])));
+}
+
 uint8_t Buffer::getUint8()
 {
 	return *((uint8_t*)(&str[readIndex++]));
@@ -61,20 +68,20 @@ std::string Buffer::getString(int len)
 	return std::string(&str[tmp],len);
 }
 
-int Buffer::readin(Socket &socket, int len) {
+int Buffer::readin(Socket *psocket, int len) {
 	while (leftSpace() < len) {
 		str.resize(str.size() * 2);
 	}
-	int cnt = socket.read(&str[writeIndex], len);
+	int cnt = psocket->read(&str[writeIndex], len);
 	if (cnt > 0) {
 		writeIndex += cnt;
 	}
 	return cnt;
 }
 
-int Buffer::writeout(Socket socket)
+int Buffer::writeout(Socket *psocket)
 {
-	int cnt = socket.write(&str[readIndex], length());
+	int cnt = psocket->write(&str[readIndex], length());
 	if (cnt > 0) {
 		readIndex += cnt;
 	}

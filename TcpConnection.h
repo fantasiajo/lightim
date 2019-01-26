@@ -13,12 +13,12 @@ class Msg;
 class TcpConnection {
 public:
 	TcpConnection();
-	TcpConnection(EventLoop *_ploop, Socket _fd);
+	TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket);
 	~TcpConnection();
 	//通知负责该连接的epoller，delete ioem
 
-	Socket getfd() {
-		return confd;
+	Socket *getfd() {
+		return pconfd.get();
 	}
 
 	void connectionEstablished(std::shared_ptr<TcpConnection>);
@@ -35,7 +35,7 @@ public:
 private:
 	EventLoop *ploop;
 
-	Socket confd;
+	std::shared_ptr<Socket> pconfd;
 
 	std::shared_ptr<IOEventManager> pIOEM;
 	std::shared_ptr<TcpSession> pTcpSession;//需要改动，tcpconnection不能主导tcpsession的生命周期

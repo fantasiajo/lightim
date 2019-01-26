@@ -27,10 +27,10 @@ void TcpServer::start()
 	pAcceptor->listen();
 }
 
-void TcpServer::newConnection(Socket &socket) {
+void TcpServer::newConnection(std::shared_ptr<Socket> pSocket) {
 	EventLoop *pIoLoop = Singleton<EventLoopThreadManager>::instance().getNextEventLoop();
-	std::shared_ptr<TcpConnection> pTcpCon(new TcpConnection(pIoLoop, socket));
-	fd2TcpConn[socket.getSockfd()] = pTcpCon;
+	std::shared_ptr<TcpConnection> pTcpCon(new TcpConnection(pIoLoop, pSocket));
+	fd2TcpConn[pSocket->getSockfd()] = pTcpCon;
 	pTcpCon->setCloseCallBack(std::bind(&TcpServer::closeConnection, this, std::placeholders::_1));
 	pIoLoop->runInLoop(std::bind(&TcpConnection::connectionEstablished, pTcpCon.get(), pTcpCon));
 }
@@ -38,6 +38,16 @@ void TcpServer::newConnection(Socket &socket) {
 void TcpServer::closeConnection(int fd)
 {
 	fd2TcpConn.erase(fd);
+}
+
+void TcpServer::loginInLoop(uint32_t id, TcpConnection *pTcpcon)
+{
+	if (ploop->isInLoopThread()) {
+		id2TcpConn[id] = pTcpcon;
+	}
+	else {
+		ploop->queueInLoop(std::bind(&TcpServer::loginInLoop, this, id, pTcpcon));
+	}
 }
 
 

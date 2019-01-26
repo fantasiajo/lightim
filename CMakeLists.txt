@@ -13,4 +13,4 @@ target_link_libraries(server -lpthread -lmysqlclient)
 add_executable(dbtest dbtest.cpp DB.cpp easylogging++.cc)
 target_link_libraries(dbtest -lmysqlclient)
 
-add_executable(signuptest signuptest.cpp Msg.cpp Socket.cpp easylogging++.cc)
+add_executable(signuptest signuptest.cpp Msg.cpp Socket.cpp easylogging++.cc md5.cpp)

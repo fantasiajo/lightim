@@ -5,6 +5,7 @@
 #include "arpa/inet.h"
 #include "unistd.h"
 #include "easylogging++.h"
+#include "error.h"
 
 
 Socket::Socket()
@@ -67,7 +68,7 @@ void Socket::listen()
 	}
 }
 
-Socket Socket::accept() {
+std::shared_ptr<Socket> Socket::accept() {
 	int tmpfd = ::accept4(sockfd,NULL,0, SOCK_NONBLOCK);
 	if (tmpfd == -1) {
 		perror("accept4");
@@ -83,15 +84,15 @@ Socket Socket::accept() {
 		exit(1);
 	}
 
-	Socket socket;
-	socket.type = CONNECTION_SOCKET;
-	socket.sockfd = tmpfd;
-	socket.addr = addr;
-	socket.port = port;
-	socket.peerAddr = sockaddr.sin_addr;
-	socket.peerPort = sockaddr.sin_port;
+	std::shared_ptr<Socket> psocket;
+	psocket->type = CONNECTION_SOCKET;
+	psocket->sockfd = tmpfd;
+	psocket->addr = addr;
+	psocket->port = port;
+	psocket->peerAddr = sockaddr.sin_addr;
+	psocket->peerPort = sockaddr.sin_port;
 	
-	return socket;
+	return psocket;
 }
 
 void Socket::close()
@@ -99,7 +100,7 @@ void Socket::close()
 	::close(sockfd);
 }
 
-int Socket::connect(std::string ip, unsigned short _port)
+int Socket::connect(std::string ip, unsigned short _port,int timeout)
 {
 	int status = inet_pton(AF_INET, ip.c_str(), &addr);
 	if (status == -1) {
@@ -116,6 +117,45 @@ int Socket::connect(std::string ip, unsigned short _port)
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_port = port;
 	sockaddr.sin_addr = addr;
+	int res;
+	int error = 0;
+	if ((res = ::connect(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr))) < 0) {
+		if (errno != EINPROGRESS) {
+			return -1;
+		}
+	}
+	if (res != 0) {
+		fd_set rset, wset;
+		FD_ZERO(&rset);
+		FD_SET(sockfd, &rset);
+		wset = rset;
+		struct timeval tval;
+		tval.tv_sec = timeout;
+		tval.tv_usec = 0;
+		if ((res = select(sockfd + 1, &rset, &wset, NULL, timeout ? &tval : NULL)) == 0) {
+			::close(sockfd);
+			errno == ETIMEDOUT;
+			return -1;
+		}
+		if (FD_ISSET(sockfd, &rset) || FD_ISSET(sockfd, &wset)) {
+			socklen_t len = sizeof(error);
+			if ((getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len)) < 0) {
+				return -1;
+			}
+		}
+		else {
+			LOG(FATAL) << "select error: sockfd not set";
+		}
+	}
+	if (error) {
+		::close(sockfd);
+		errno = error;
+		return -1;
+	}
+	return 0;
+
+	/*
+	
 	if (::connect(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == -1) {
 		LOG(ERROR) << "connect." << strerror(errno);
 		return -1;
@@ -133,6 +173,7 @@ int Socket::connect(std::string ip, unsigned short _port)
 	peerAddr = sockaddr.sin_addr;
 	peerPort = sockaddr.sin_port;
 	return 0;
+	*/
 }
 
 

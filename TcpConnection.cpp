@@ -10,14 +10,14 @@ TcpConnection::TcpConnection()
 {
 }
 
-TcpConnection::TcpConnection(EventLoop *_ploop, Socket _fd)
+TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 	:ploop(_ploop),
-	confd(_fd)
+	pconfd(pSocket)
 {
-	pIOEM.reset(new IOEventManager(_ploop, confd.getSockfd()));
+	pIOEM.reset(new IOEventManager(_ploop, pconfd->getSockfd()));
 	pIOEM->type = "TcpConnection";
-	pIOEM->ip = confd.getPeerAddr();
-	pIOEM->port = confd.getPeerPort();
+	pIOEM->ip = pconfd->getPeerAddr();
+	pIOEM->port = pconfd->getPeerPort();
 	pIOEM->setReadCallBack(std::bind(&TcpConnection::handleRead,this));
 	pIOEM->setWriteCallBack(std::bind(&TcpConnection::handleWrite, this));
 }
@@ -75,7 +75,7 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::handleRead()
 {
-	int cnt = inbuffer.readin(confd, confd.readAbleNum());
+	int cnt = inbuffer.readin(pconfd.get(), pconfd->readAbleNum());
 	if (cnt > 0) {
 		msgCallBack();
 	}
@@ -89,7 +89,7 @@ void TcpConnection::handleRead()
 
 void TcpConnection::handleWrite()
 {
-	int cnt = outbuffer.writeout(confd);
+	int cnt = outbuffer.writeout(pconfd.get());
 	if (cnt < 0) {
 		if (errno == EPIPE || errno == ECONNRESET) {
 			handleClose();
@@ -106,7 +106,7 @@ void TcpConnection::handleError()
 
 void TcpConnection::handleClose()
 {
-	confd.close();
-	std::cerr << confd.getPeerAddr() + ":" << confd.getPeerPort() << " leaves."<< std::endl;
-	closeCallBack(confd.getSockfd());
+	pconfd->close();
+	std::cerr << pconfd->getPeerAddr() + ":" << pconfd->getPeerPort() << " leaves."<< std::endl;
+	closeCallBack(pconfd->getSockfd());
 }

@@ -3,10 +3,9 @@
 
 Acceptor::Acceptor(EventLoop *_ploop,std::string ip, unsigned short port)
 	:ploop(_ploop),
-	lisfd(ip,port),
-	pIOEM()
+	plisfd(new Socket(ip,port))
 {
-	pIOEM.reset(new IOEventManager(_ploop, lisfd.getSockfd()));
+	pIOEM.reset(new IOEventManager(_ploop, plisfd->getSockfd()));
 	pIOEM->type = "Acceptor";
 	pIOEM->setReadCallBack(std::bind(&Acceptor::accept,this));
 }
@@ -17,18 +16,18 @@ Acceptor::~Acceptor()
 
 void Acceptor::listen()
 {
-	lisfd.bind();
-	lisfd.listen();
+	plisfd->bind();
+	plisfd->listen();
 	pIOEM->enableReading();
 }
 
 void Acceptor::accept()
 {
-	Socket consocket = lisfd.accept();
-	newConnectionCallBack(consocket);
+	std::shared_ptr<Socket> pconsocket = plisfd->accept();
+	newConnectionCallBack(pconsocket);
 }
 
-void Acceptor::setNewConnectionCallBack(std::function<void(Socket&)> cb) {
+void Acceptor::setNewConnectionCallBack(std::function<void(std::shared_ptr<Socket>)> cb) {
 	newConnectionCallBack = cb;
 }
 

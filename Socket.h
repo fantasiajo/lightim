@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string>
+#include <memory>
 
 class Socket {
 public:
@@ -15,12 +16,18 @@ public:
 	Socket(std::string _ip, unsigned short _port);
 	~Socket();
 
+	Socket(const Socket &) = delete;
+	Socket &operator= (const Socket &) = delete;
+
+	Socket(Socket &&) = delete;
+	Socket &operator=(Socket &&) = delete;
+
 	void bind();
 	void listen();
-	Socket accept();
+	std::shared_ptr<Socket> accept();
 	void close();
 
-	int connect(std::string ip, unsigned short _port);
+	int connect(std::string ip, unsigned short _port,int timeout);
 
 	int getSockfd () const;
 	std::string getAddr() const;

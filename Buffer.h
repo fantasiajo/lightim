@@ -18,15 +18,16 @@ public:
 	//void recycleSpace();
 
 	uint16_t peekUint16();
-	uint16_t getUint16();
-
+	
 	uint8_t getUint8();
+	uint16_t getUint16();
+	uint32_t getUint32();
 
 	std::string getString(int len);
 
-	int readin(Socket &socket, int len);
+	int readin(Socket *socket, int len);
 
-	int writeout(Socket socket);
+	int writeout(Socket *socket);
 
 private:
 	std::vector<char> str;

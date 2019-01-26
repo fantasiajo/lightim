@@ -17,16 +17,16 @@ public:
 
 	void accept();
 
-	void setNewConnectionCallBack(std::function<void(Socket&)> cb);
+	void setNewConnectionCallBack(std::function<void(std::shared_ptr<Socket>)> cb);
 
 private:
 	EventLoop *ploop;
 
-	Socket lisfd;
+	std::shared_ptr<Socket> plisfd;
 
 	std::shared_ptr<IOEventManager> pIOEM;
 	
 
-	std::function<void(Socket&)> newConnectionCallBack;
+	std::function<void(std::shared_ptr<Socket>)> newConnectionCallBack;
 };
 

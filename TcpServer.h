@@ -18,8 +18,10 @@ public:
 	void init(EventLoop *_ploop, std::string , unsigned short port);
 	void start();
 
-	void newConnection(Socket &socket);
+	void newConnection(std::shared_ptr<Socket> pSocket);
 	void closeConnection(int fd);
+
+	//void loginInLoop(uint32_t,TcpConnection *);
 
 private:
 	EventLoop *ploop;
@@ -27,5 +29,6 @@ private:
 	std::unordered_map<int,std::shared_ptr<TcpConnection>> fd2TcpConn;
 	std::shared_ptr<Acceptor> pAcceptor;
 
+	//std::unordered_map<uint32_t, TcpConnection*> id2TcpConn;
 };
 

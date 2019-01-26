@@ -1,15 +1,25 @@
 #pragma once
 #include "Buffer.h"
 
+#define FAIL 0
+#define SUCCESS 1
+
+#define USERORPWDNOTCORR 0
+#define LOGINED 2
+
 //Msg:|len 2 bytes|MSG_TYPE 1 bytes|data len-3 bytes|
 class Msg {
 public:
 	enum MSG_TYPE {
+		//CONFIRM,
 		SIGN_UP,
 		//|nickname 32 bytes|pwdmd5 32 bytes|
 		SIGN_UP_ANS,
+		//|successorfail 1 byte|
 		LOGIN_IN,
+		//|id 4 bytes|pwdmd5 32bytes|
 		LOGIN_IN_ANS,
+		//|successorfail 1 byte|fialtype 1 byte|
 		SHOW_SB,
 		SHOW_SB_ANS,
 		ADD_SB,

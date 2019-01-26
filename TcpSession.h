@@ -16,10 +16,12 @@ public:
 private:
 	EventLoop *ploop;
 
+	bool login;
+
 	std::weak_ptr<TcpConnection> tmpPTcpConnection;
 
 	void handleSignUp(Buffer *pBuffer);//|nickname 32 bytes|md5passwd 32 bytes|
-	void handleLoginIn();
+	void handleLoginIn(Buffer *pBuffer);
 	void handleShowSb();
 	void handleAddSb();
 	void handleDeleteSb();
