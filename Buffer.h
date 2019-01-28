@@ -4,10 +4,15 @@
 #include "unistd.h"
 #include "Socket.h"
 
+class EventLoop;
+class Msg;
+
 class Buffer {
 public:
-	Buffer();
+	Buffer(bool isSend = false);
 	~Buffer();
+
+	bool allConfirm();
 
 	bool empty();
 	int length();
@@ -29,8 +34,23 @@ public:
 
 	int writeout(Socket *socket);
 
+	void setLoop(EventLoop *_ploop) {
+		ploop = _ploop;
+	}
+
+
+	void pushMsg(std::shared_ptr<Msg> pMsg);
+	void pushMsgInLoop(std::shared_ptr<Msg> pMsg);
+
+	void confirm();
+
 private:
+	EventLoop *ploop;
+
 	std::vector<char> str;
 	int readIndex;
 	int writeIndex;
+	int confirmIndex;
+
+	bool isSend;
 };

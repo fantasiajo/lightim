@@ -1,13 +1,22 @@
 #include "Buffer.h"
+#include "EventLoop.h"
+#include "Msg.h"
 
-Buffer::Buffer()
-	:readIndex(0),writeIndex(0)
+Buffer::Buffer(bool _isSend)
+	:readIndex(0),writeIndex(0),isSend(_isSend)
 {
 	str.resize(10);
+	if (isSend) {
+		confirmIndex = 0;
+	}
 }
 
 Buffer::~Buffer() {
 
+}
+
+bool Buffer::allConfirm() {
+	return confirmIndex == writeIndex;
 }
 
 bool Buffer::empty() {
@@ -86,4 +95,30 @@ int Buffer::writeout(Socket *psocket)
 		readIndex += cnt;
 	}
 	return cnt;
+}
+
+void Buffer::pushMsg(std::shared_ptr<Msg> pMsg)
+{
+	in(pMsg->getBuf(), pMsg->getLen());
+}
+
+void Buffer::pushMsgInLoop(std::shared_ptr<Msg> pMsg)
+{
+	if (ploop->isInLoopThread()) {
+		pushMsg(pMsg);
+	}
+	else {
+		ploop->queueInLoop(std::bind(&Buffer::pushMsgInLoop, this, pMsg));
+	}
+}
+
+void Buffer::confirm() {
+	auto len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
+	auto type = *(uint8_t *)(&str[confirmIndex + 2]);
+	while (type == Msg::MSG_TYPE::CONFIRM) {
+		confirmIndex += len;
+		len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
+		type = *(uint8_t *)(&str[confirmIndex + 2]);
+	}
+	confirmIndex += len;
 }

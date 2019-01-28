@@ -11,7 +11,8 @@
 class Msg {
 public:
 	enum MSG_TYPE {
-		//CONFIRM,
+		CONFIRM,
+		//|type|
 		SIGN_UP,
 		//|nickname 32 bytes|pwdmd5 32 bytes|
 		SIGN_UP_ANS,
@@ -27,6 +28,7 @@ public:
 		DELETE_SB,
 		DELETE_SB_ANS,
 		TO_SB,
+		//|targetid 4 bytes|content len - 3 - 4 bytes|
 		FROM_SB
 	};
 
@@ -42,6 +44,7 @@ public:
 
 	void writeUint8(uint8_t n);
 	void writeUint16(uint16_t n);
+	void writeUint32(uint32_t n);
 	void writeString(const char* str, int len);
 
 	const static uint16_t headerLen = 3;

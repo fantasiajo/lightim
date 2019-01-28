@@ -4,6 +4,8 @@
 #include "TcpConnection.h"
 #include "TcpSession.h"
 #include "Msg.h"
+#include "TcpServer.h"
+#include "Singleton.h"
 #include <string>
 #include <iostream>
 TcpConnection::TcpConnection()
@@ -12,7 +14,9 @@ TcpConnection::TcpConnection()
 
 TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 	:ploop(_ploop),
-	pconfd(pSocket)
+	pconfd(pSocket),
+	pSendBuf(new Buffer(true)),
+	pRecvBuf(new Buffer())
 {
 	pIOEM.reset(new IOEventManager(_ploop, pconfd->getSockfd()));
 	pIOEM->type = "TcpConnection";
@@ -22,12 +26,21 @@ TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 	pIOEM->setWriteCallBack(std::bind(&TcpConnection::handleWrite, this));
 }
 
-void TcpConnection::connectionEstablished(std::shared_ptr<TcpConnection> pTcpCon)
+void TcpConnection::connectionEstablished()
 {
-	pTcpSession.reset(new TcpSession(ploop,pTcpCon));
-	setMsgCallBack(std::bind(&TcpSession::handleMsg,
-		pTcpSession.get(), &inbuffer));
+	pTcpSession.reset(new TcpSession(ploop,this));
+	pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1, std::placeholders::_2));
+	setMsgCallBack(std::bind(&TcpSession::handleMsg,pTcpSession.get(), pRecvBuf.get()));
+	pTcpSession->setConfirmCallback(std::bind(&TcpConnection::confirm,this));
 	pIOEM->enableReading();
+}
+
+void TcpConnection::setSendBuf(std::shared_ptr<Buffer> pB)
+{
+	pSendBuf = pB;
+	if (!pSendBuf->allConfirm()) {
+		pIOEM->enableWriting();
+	}
 }
 
 void TcpConnection::setMsgCallBack(const std::function<void()> &cb)
@@ -51,7 +64,7 @@ void TcpConnection::sendInLoop(const char *buf, int len) {
 
 void TcpConnection::send(const char * buf, int len)
 {
-	outbuffer.in(buf, len);
+	pSendBuf->in(buf, len);
 	pIOEM->enableWriting();
 }
 
@@ -68,6 +81,11 @@ void TcpConnection::sendMsg(std::shared_ptr<Msg> pMsg) {
 	send(pMsg->getBuf(), pMsg->getLen());
 }
 
+void TcpConnection::confirm()
+{
+	pSendBuf->confirm();
+}
+
 TcpConnection::~TcpConnection()
 {
 	ploop->deleteIOEM(pIOEM.get());
@@ -75,7 +93,7 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::handleRead()
 {
-	int cnt = inbuffer.readin(pconfd.get(), pconfd->readAbleNum());
+	int cnt = pRecvBuf->readin(pconfd.get(), pconfd->readAbleNum());
 	if (cnt > 0) {
 		msgCallBack();
 	}
@@ -89,13 +107,13 @@ void TcpConnection::handleRead()
 
 void TcpConnection::handleWrite()
 {
-	int cnt = outbuffer.writeout(pconfd.get());
+	int cnt = pSendBuf->writeout(pconfd.get());
 	if (cnt < 0) {
 		if (errno == EPIPE || errno == ECONNRESET) {
 			handleClose();
 		}
 	}
-	if (outbuffer.empty()) {
+	if (pSendBuf->empty()) {
 		pIOEM->disableWriting();
 	}
 }

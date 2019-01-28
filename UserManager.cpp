@@ -29,11 +29,27 @@ bool UserManager::exists(EventLoop * ploop, uint32_t id, std::string pwd)
 	return !res.dataMatrix.empty();
 }
 
-bool UserManager::addUser(EventLoop *ploop,std::string nickname, std::string password)
+bool UserManager::addUser(EventLoop *ploop,std::string nickname, std::string password,uint32_t &id)
 {
 	QUERY_RESULT res;
 
-	return ploop->getDb()->exeSQL(
+	if (!ploop->getDb()->exeSQL(
 		std::string("insert into user(nickname,password) values('") + nickname + "','" + password + "')",
-		res);
+		res)) {
+		return false;
+	}
+	if (!ploop->getDb()->exeSQL(
+		std::string("select last_insert_id()"),
+		res
+	)) {
+		return false;
+	}
+	id = std::stoul(res.dataMatrix[0][0]);
+	return true;
+}
+
+bool UserManager::addChat(EventLoop * ploop, int fromid, int toid, std::string content)
+{
+
+	return false;
 }

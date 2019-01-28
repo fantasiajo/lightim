@@ -28,6 +28,12 @@ void Msg::writeUint16(uint16_t n)
 	curr += 2;
 }
 
+void Msg::writeUint32(uint32_t n)
+{
+	*((uint32_t *)(buf + curr)) = ::htons(n);
+	curr += 4;
+}
+
 void Msg::writeString(const char * str, int len)
 {
 	strncpy(buf + curr, str, len);

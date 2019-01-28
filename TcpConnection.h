@@ -21,7 +21,13 @@ public:
 		return pconfd.get();
 	}
 
-	void connectionEstablished(std::shared_ptr<TcpConnection>);
+	EventLoop *getloop() {
+		return ploop;
+	}
+
+	void connectionEstablished();
+
+	void setSendBuf(std::shared_ptr<Buffer> pB);
 
 	void setMsgCallBack(const std::function<void()>&);
 	void setCloseCallBack(const std::function<void(int)> &);
@@ -30,7 +36,8 @@ public:
 	void send(const char*buf, int len);
 	void sendInLoop(std::shared_ptr<Msg> pMsg);
 	void sendMsg(std::shared_ptr<Msg> pMsg);
-	
+
+	void confirm();
 
 private:
 	EventLoop *ploop;
@@ -40,8 +47,8 @@ private:
 	std::shared_ptr<IOEventManager> pIOEM;
 	std::shared_ptr<TcpSession> pTcpSession;//需要改动，tcpconnection不能主导tcpsession的生命周期
 
-	Buffer inbuffer;
-	Buffer outbuffer;
+	std::shared_ptr<Buffer> pRecvBuf;
+	std::shared_ptr<Buffer> pSendBuf;
 
 	void handleRead();
 	void handleWrite();
@@ -50,6 +57,4 @@ private:
 
 	std::function<void()> msgCallBack;
 	std::function<void(int)> closeCallBack;
-
-	
 };
