@@ -5,9 +5,6 @@
 template <typename T>
 class Singleton {
 public:
-	Singleton();
-	~Singleton();
-
 	static T& instance() {
 		if (!pT) {
 			pT.reset(new T());

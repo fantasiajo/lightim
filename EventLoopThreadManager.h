@@ -10,8 +10,12 @@ class EventLoop;
 
 class EventLoopThreadManager {
 public:
-//	EventLoopThreadManager();
-//	~EventLoopThreadManager();
+	EventLoopThreadManager(){}
+	~EventLoopThreadManager(){}
+	EventLoopThreadManager(const EventLoopThreadManager &) = delete;
+	EventLoopThreadManager & operator=(const EventLoopThreadManager &) = delete;
+	EventLoopThreadManager(EventLoopThreadManager &&) = delete;
+	EventLoopThreadManager & operator=(EventLoopThreadManager &&) = delete;
 
 	void newEventLoopThread(int num);
 	EventLoop *getNextEventLoop();

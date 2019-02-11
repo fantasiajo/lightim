@@ -10,10 +10,6 @@ Acceptor::Acceptor(EventLoop *_ploop,std::string ip, unsigned short port)
 	pIOEM->setReadCallBack(std::bind(&Acceptor::accept,this));
 }
 
-Acceptor::~Acceptor()
-{
-}
-
 void Acceptor::listen()
 {
 	plisfd->bind();

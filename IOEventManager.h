@@ -11,6 +11,11 @@ public:
 	IOEventManager(EventLoop *_ploop, int _fd);
 	~IOEventManager();
 
+	IOEventManager(const IOEventManager &) = delete;
+	IOEventManager &operator=(const IOEventManager &) = delete;
+	IOEventManager(IOEventManager &&) = delete;
+	IOEventManager &operator=(IOEventManager &&) = delete;
+
 	int getfd();
 
 	uint32_t getEvents();

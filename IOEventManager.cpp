@@ -5,13 +5,14 @@
 
 IOEventManager::IOEventManager(EventLoop *_ploop, int _fd)
 	:ploop(_ploop),
-	fd(_fd)
+	fd(_fd),
+	events(0)
 {
-
+	ploop->addIOEM(this);
 }
 
 IOEventManager::~IOEventManager() {
-	disableall();
+	ploop->deleteIOEM(this);
 }
 
 int IOEventManager::getfd() {
@@ -58,7 +59,8 @@ void IOEventManager::enableWriting() {
 }
 
 void IOEventManager::disableReading() {
-
+	events &= ~(EPOLLIN | EPOLLPRI);
+	update();
 }
 
 void IOEventManager::disableWriting() {
@@ -68,7 +70,8 @@ void IOEventManager::disableWriting() {
 
 void IOEventManager::disableall()
 {
-	ploop->deleteIOEM(this);
+	events = 0;
+	update();
 }
 
 void IOEventManager::update() {
@@ -76,17 +79,19 @@ void IOEventManager::update() {
 }
 
 void IOEventManager::handleEvent() {
+	if (recvEvents & (EPOLLIN | EPOLLPRI)) {
+		//std::cout << type + " " + ip + ":" << port << std::endl;
+		readCallBack();
+	}
+	if (recvEvents & EPOLLOUT) {
+		writeCallBack();
+	}
+	/*
 	if ((recvEvents & EPOLLHUP) && !(recvEvents & EPOLLIN)) {
 		closeCallBack();
 	}
 	if (recvEvents & EPOLLERR) {
 		errorCallBack();
 	}
-	if (recvEvents & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
-		std::cout << type+" "+ip+":" << port << std::endl;
-		readCallBack();
-	}
-	if (recvEvents & EPOLLOUT) {
-		writeCallBack();
-	}
+	*/
 }

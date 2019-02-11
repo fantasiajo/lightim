@@ -84,7 +84,7 @@ std::shared_ptr<Socket> Socket::accept() {
 		exit(1);
 	}
 
-	std::shared_ptr<Socket> psocket;
+	std::shared_ptr<Socket> psocket(new Socket());
 	psocket->type = CONNECTION_SOCKET;
 	psocket->sockfd = tmpfd;
 	psocket->addr = addr;

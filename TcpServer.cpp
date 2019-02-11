@@ -5,22 +5,15 @@
 #include "Acceptor.h"
 #include "EventLoopThreadManager.h"
 #include "EventLoop.h"
+#include "IOEventManager.h"
 #include <iostream>
 #include "Buffer.h"
-
-TcpServer::TcpServer() {
-
-}
 
 void TcpServer::init(EventLoop *_ploop,std::string ip, unsigned short port)
 {
 	ploop = _ploop;
 	pAcceptor.reset(new Acceptor(ploop, ip, port));
 	pAcceptor->setNewConnectionCallBack(std::bind(&TcpServer::newConnection,this,std::placeholders::_1));
-}
-
-TcpServer::~TcpServer() {
-
 }
 
 void TcpServer::start()
@@ -31,33 +24,44 @@ void TcpServer::start()
 void TcpServer::newConnection(std::shared_ptr<Socket> pSocket) {
 	EventLoop *pIoLoop = Singleton<EventLoopThreadManager>::instance().getNextEventLoop();
 	std::shared_ptr<TcpConnection> pTcpCon(new TcpConnection(pIoLoop, pSocket));
-	fd2TcpConn[pSocket->getSockfd()] = pTcpCon;
-	pTcpCon->setCloseCallBack(std::bind(&TcpServer::closeConnection, this, std::placeholders::_1));
-	pIoLoop->runInLoop(std::bind(&TcpConnection::connectionEstablished, pTcpCon.get()));
+	tcpConnSet.insert(pTcpCon);
+	pTcpCon->setCloseCallBack(std::bind(&TcpServer::closeConnection, this, pTcpCon));
+	pIoLoop->queueInLoop(std::bind(&TcpConnection::connectionEstablished, pTcpCon.get()));
 }
 
-void TcpServer::closeConnection(int fd)
+void TcpServer::closeConnection(std::shared_ptr<TcpConnection> pTcpConn)
 {
-	fd2TcpConn.erase(fd);
+	tcpConnSet.erase(pTcpConn);
 }
 
-void TcpServer::login(uint32_t id, TcpConnection *pTcpcon)
+void TcpServer::login(uint32_t id, std::shared_ptr<TcpConnection> pTcpConn)
 {
-	auto iter = id2SBuf.find(id);
-	if (iter == id2SBuf.end()) {
-		id2SBuf[id] = std::make_shared<Buffer>(true);
+	auto iter = userMap.find(id);
+	if (iter == userMap.end()) {
+		userMap[id].pSendBuf = std::make_shared<Buffer>(true);
+		userMap[id].tmpPTcpConn = pTcpConn;
 	}
-	pTcpcon->setSendBuf(id2SBuf[id]);
-	id2SBuf[id]->setLoop(pTcpcon->getloop());
+	
+	userMap[id].pSendBuf->setLoop(pTcpConn->getloop());
+	userMap[id].pSendBuf->reset();
+	userMap[id].pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify,this,id));
+
+	pTcpConn->setSendBuf(userMap[id].pSendBuf);
 }
 
 void TcpServer::forwardMsg(uint32_t id, std::shared_ptr<Msg> pMsg)
 {
-	//if (ploop->isInLoopThread()) {
-		id2SBuf[id]->pushMsgInLoop(pMsg);//?是否需要加锁？
-	//}
-	//else {
-	//	ploop->queueInLoop(std::bind(&TcpServer::forwardMsg, this, id, pMsg));
-	//}
+	//如果没有在usermap中找到id，说明从来没有登陆过，视为没有此用户。从而不用加锁。
+	auto iter = userMap.find(id);
+	if (iter != userMap.end()) {
+		userMap[id].pSendBuf->pushMsgInLoop(pMsg);
+	}
+}
+
+void TcpServer::forwardNotify(uint32_t id)
+{
+	if (!userMap[id].tmpPTcpConn.expired()) {//如果id目前在线，则启动写监听
+		userMap[id].tmpPTcpConn.lock()->getPIOEM()->enableWriting();//bug,启用监听时可能信息还排在queue，会检测到没有信息而关闭监听
+	}
 }
 

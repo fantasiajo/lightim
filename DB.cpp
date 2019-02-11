@@ -55,6 +55,13 @@ bool DB::exeSQL(std::string sql, QUERY_RESULT &queryResult)
 	}
 }
 
+std::string DB::escape(const std::string &content)
+{
+	char to[2 * content.length() + 1];
+	mysql_real_escape_string(conn, to, content.c_str(), content.length());
+	return to;
+}
+
 void QUERY_RESULT::print(std::ostream & os)
 {
 	for (const auto &field : fields) {

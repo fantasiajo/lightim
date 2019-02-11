@@ -3,6 +3,7 @@
 #include <vector>
 #include "unistd.h"
 #include "Socket.h"
+#include <functional>
 
 class EventLoop;
 class Msg;
@@ -10,7 +11,12 @@ class Msg;
 class Buffer {
 public:
 	Buffer(bool isSend = false);
-	~Buffer();
+	~Buffer(){}
+
+	Buffer(const Buffer &) = delete;
+	Buffer &operator=(const Buffer &) = delete;
+	Buffer(Buffer &&) = delete;
+	Buffer &operator=(Buffer &&) = delete;
 
 	bool allConfirm();
 
@@ -38,11 +44,14 @@ public:
 		ploop = _ploop;
 	}
 
+	void reset();
 
 	void pushMsg(std::shared_ptr<Msg> pMsg);
 	void pushMsgInLoop(std::shared_ptr<Msg> pMsg);
 
 	void confirm();
+
+	void setMsgWritenCallback(const std::function<void()> &cb);
 
 private:
 	EventLoop *ploop;
@@ -53,4 +62,6 @@ private:
 	int confirmIndex;
 
 	bool isSend;
+
+	std::function<void()> msgWritenCallback;
 };

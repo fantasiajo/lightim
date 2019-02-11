@@ -11,11 +11,16 @@ class Msg;
 class TcpSession {
 public:
 	TcpSession(EventLoop *_ploop,TcpConnection *_pTcpConn);
-	~TcpSession();
+	~TcpSession(){}
+
+	TcpSession(const TcpSession &) = delete;
+	TcpSession &operator=(const TcpSession &) = delete;
+	TcpSession(TcpSession &&) = delete;
+	TcpSession &operator=(TcpSession &&) = delete;
 
 	void handleMsg(Buffer *pBuffer);
 
-	void setLoginCallback(const std::function<void(uint32_t, TcpConnection *)>&);
+	void setLoginCallback(const std::function<void(uint32_t)> &cb);
 	void setConfirmCallback(const std::function<void()> &);
 private:
 	EventLoop *ploop;
@@ -29,10 +34,12 @@ private:
 	void handleSignUp(Buffer *pBuffer);//|nickname 32 bytes|md5passwd 32 bytes|
 	void handleLoginIn(Buffer *pBuffer);
 	void handleShowSb();
-	void handleAddSb();
+	void handleAddSb(Buffer *pBuffer);
+	void handleAgreeSb(Buffer *pBuffer);
 	void handleDeleteSb();
 	void handleToSb(Buffer *pBuffer,int len);
+	void handleGetFriends(Buffer *pBuffer);
 
-	std::function<void(uint32_t, TcpConnection *)> loginCallback;
+	std::function<void(uint32_t)> loginCallback;
 	std::function<void()> confirmCallback;
 };

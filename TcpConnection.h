@@ -10,12 +10,14 @@ class IOEventManager;
 class EventLoop;
 class Msg;
 
-class TcpConnection {
+class TcpConnection :public std::enable_shared_from_this<TcpConnection> {
 public:
-	TcpConnection();
 	TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket);
 	~TcpConnection();
-	//通知负责该连接的epoller，delete ioem
+	TcpConnection(const TcpConnection &) = delete;
+	TcpConnection &operator=(const TcpConnection &) = delete;
+	TcpConnection(TcpConnection &&) = delete;
+	TcpConnection &operator=(TcpConnection &&) = delete;
 
 	Socket *getfd() {
 		return pconfd.get();
@@ -25,12 +27,20 @@ public:
 		return ploop;
 	}
 
+	uint32_t getid() {
+		return id;
+	}
+
+	void setid(uint32_t _id) {
+		id = _id;
+	}
+
 	void connectionEstablished();
 
 	void setSendBuf(std::shared_ptr<Buffer> pB);
 
 	void setMsgCallBack(const std::function<void()>&);
-	void setCloseCallBack(const std::function<void(int)> &);
+	void setCloseCallBack(const std::function<void()> &);
 
 	void sendInLoop(const char *buf, int len);
 	void send(const char*buf, int len);
@@ -39,8 +49,14 @@ public:
 
 	void confirm();
 
+	std::shared_ptr<IOEventManager> getPIOEM() {
+		return pIOEM;
+	}
+
 private:
 	EventLoop *ploop;
+
+	uint32_t id;
 
 	std::shared_ptr<Socket> pconfd;
 
@@ -56,5 +72,5 @@ private:
 	void handleClose();
 
 	std::function<void()> msgCallBack;
-	std::function<void(int)> closeCallBack;
+	std::function<void()> closeCallBack;
 };

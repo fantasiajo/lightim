@@ -1,6 +1,6 @@
 #include "EventLoopThreadManager.h"
 #include "EventLoop.h"
-#include <iostream>
+#include <mutex>
 
 int EventLoopThreadManager::next;
 void EventLoopThreadManager::newEventLoopThread(int num) {
@@ -26,11 +26,12 @@ EventLoopThreadManager::getNextEventLoop() {
 
 void EventLoopThreadManager::threadFun() {
 	EventLoop *ploop = nullptr;
-	mtx_ploops.lock();
-	ploops.emplace_back(new EventLoop());
-	ploop = ploops.back().get();
-	std::cout << std::this_thread::get_id() << ": running in ploops " << ploops.size() - 1 << " " << ploops.back().get() << std::endl;
-	mtx_ploops.unlock();
+	{
+		std::unique_lock<std::mutex> lck(mtx_ploops);
+		ploops.emplace_back(new EventLoop());
+		ploop = ploops.back().get();
+		//std::cout << std::this_thread::get_id() << ": running in ploops " << ploops.size() - 1 << " " << ploops.back().get() << std::endl;
+	}
 
 	ploop->loop();
 	//ploops.erase()

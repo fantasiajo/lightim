@@ -9,8 +9,12 @@ class ThreadManager {
 public:
 	typedef std::function<void()> Task;
 
-	ThreadManager();
-	~ThreadManager();
+	ThreadManager(){}
+	~ThreadManager(){}
+	ThreadManager(const ThreadManager &) = delete;
+	ThreadManager & operator=(const ThreadManager &) = delete;
+	ThreadManager(ThreadManager &&) = delete;
+	ThreadManager & operator=(ThreadManager &&) = delete;
 
 	void newThread(int num, Task task);
 

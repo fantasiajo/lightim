@@ -50,6 +50,35 @@ bool UserManager::addUser(EventLoop *ploop,std::string nickname, std::string pas
 
 bool UserManager::addChat(EventLoop * ploop, int fromid, int toid, std::string content)
 {
+	QUERY_RESULT res;
+	return ploop->getDb()->exeSQL(
+		std::string("insert into msg(from_id,to_id,content) values ('") + std::to_string(fromid) + "','"
+		+ std::to_string(toid) + "','" + ploop->getDb()->escape(content) + "')",
+		res
+	);
+}
 
-	return false;
+bool UserManager::addFriend(EventLoop * ploop,uint32_t id1, uint32_t id2) {
+	QUERY_RESULT res;
+	return ploop->getDb()->exeSQL(
+		std::string("insert into friends(id1,id2) values ('")+std::to_string(id1)+"','"+
+		std::to_string(id2)+"')",
+		res
+	);
+}
+
+bool UserManager::getFriends(EventLoop * ploop, uint32_t id, std::vector<std::pair<uint32_t, std::string>>& idname)
+{
+	QUERY_RESULT res;
+	if (ploop->getDb()->exeSQL(
+		std::string("select user_id, nickname from user where user_id in(select id2 from friends where id1 = '")
+		+ std::to_string(id) + "')",
+		res
+	)) {
+		idname.resize(res.dataMatrix.size());
+		for (int i = 0; i < res.dataMatrix.size(); ++i) {
+			idname[i].first = std::stoul(res.dataMatrix[i][0]);
+			idname[i].second = res.dataMatrix[i][1];
+		}
+	}
 }

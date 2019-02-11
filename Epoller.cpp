@@ -14,7 +14,9 @@ Epoller::Epoller()
 }
 
 Epoller::~Epoller() {
-	close(epoll_fd);
+	if (close(epoll_fd) == -1) {
+		LOG(FATAL) << "close epoll_fd" << strerror(errno);
+	}
 }
 
 int Epoller::wait(std::vector<IOEventManager *> &activeIOEM, int timeout /*= waittimeout*/){
@@ -47,33 +49,29 @@ int Epoller::wait(std::vector<IOEventManager *> &activeIOEM, int timeout /*= wai
 	return numEvents;
 }
 
-void Epoller::updateFdIOEM(IOEventManager* pIOEM) {
-	if (FdIOEM.find(pIOEM->getfd()) == FdIOEM.end()) {
-		tmpev.events = pIOEM->getEvents();
-		tmpev.data.ptr = pIOEM;
-		if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pIOEM->getfd(), &tmpev) == -1) {
-			LOG(ERROR) << "epoll_ctl add " << pIOEM->getfd() << "failed.";
-			exit(1);
-		}
-		FdIOEM[pIOEM->getfd()] = pIOEM;
+void Epoller::addIOEM(IOEventManager * pIOEM)
+{
+	tmpev.events = pIOEM->getEvents();
+	tmpev.data.ptr = pIOEM;
+	if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pIOEM->getfd(), &tmpev) == -1) {
+		LOG(ERROR) << "epoll_ctl add " << pIOEM->getfd() << "failed.";
+		return;
 	}
-	else {
-		tmpev.events = pIOEM->getEvents();
-		tmpev.data.ptr = pIOEM;
-		if (::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, pIOEM->getfd(), &tmpev) == -1) {
-			LOG(ERROR) << "epoll_ctl add " << pIOEM->getfd() << "failed.";
-			exit(1);
-		}
+	IOEMset.insert(pIOEM);
+}
+
+void Epoller::updateIOEM(IOEventManager* pIOEM) {
+	if (IOEMset.find(pIOEM) == IOEMset.end()) return;
+	tmpev.events = pIOEM->getEvents();
+	tmpev.data.ptr = pIOEM;
+	if (::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, pIOEM->getfd(), &tmpev) == -1) {
+		LOG(ERROR) << "epoll_ctl mod " << pIOEM->getfd() << "failed.";
+		return;
 	}
 }
 
-void Epoller::deleteFdIOEM(IOEventManager* pIOEM) {
-	if (FdIOEM.find(pIOEM->getfd()) == FdIOEM.end()) {
-		//log.err << no pioem;
-	}
-	else {
-		::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pIOEM->getfd(), NULL);
-		FdIOEM.erase(pIOEM->getfd());
-	}
+void Epoller::deleteIOEM(IOEventManager* pIOEM) {
+	::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pIOEM->getfd(), NULL);
+	IOEMset.erase(pIOEM);
 }
 

@@ -8,9 +8,6 @@
 #include "Singleton.h"
 #include <string>
 #include <iostream>
-TcpConnection::TcpConnection()
-{
-}
 
 TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 	:ploop(_ploop),
@@ -29,9 +26,9 @@ TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 void TcpConnection::connectionEstablished()
 {
 	pTcpSession.reset(new TcpSession(ploop,this));
-	pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1, std::placeholders::_2));
-	setMsgCallBack(std::bind(&TcpSession::handleMsg,pTcpSession.get(), pRecvBuf.get()));
+	pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,this->shared_from_this()));
 	pTcpSession->setConfirmCallback(std::bind(&TcpConnection::confirm,this));
+	setMsgCallBack(std::bind(&TcpSession::handleMsg, pTcpSession.get(), pRecvBuf.get()));
 	pIOEM->enableReading();
 }
 
@@ -48,7 +45,7 @@ void TcpConnection::setMsgCallBack(const std::function<void()> &cb)
 	msgCallBack = cb;
 }
 
-void TcpConnection::setCloseCallBack(const std::function<void(int)>& cb)
+void TcpConnection::setCloseCallBack(const std::function<void()>& cb)
 {
 	closeCallBack = cb;
 }
@@ -93,7 +90,9 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::handleRead()
 {
-	int cnt = pRecvBuf->readin(pconfd.get(), pconfd->readAbleNum());
+	auto n = pconfd->readAbleNum();
+	if (n == 0) n = 1;//防止因为n==0导致返回值为0
+	int cnt = pRecvBuf->readin(pconfd.get(), n);
 	if (cnt > 0) {
 		msgCallBack();
 	}
@@ -101,7 +100,10 @@ void TcpConnection::handleRead()
 		handleClose();
 	}
 	else {
-		handleError();
+		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+			return;
+		}
+		handleClose();
 	}
 }
 
@@ -109,12 +111,17 @@ void TcpConnection::handleWrite()
 {
 	int cnt = pSendBuf->writeout(pconfd.get());
 	if (cnt < 0) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+			return;
+		}
 		if (errno == EPIPE || errno == ECONNRESET) {
 			handleClose();
 		}
 	}
-	if (pSendBuf->empty()) {
-		pIOEM->disableWriting();
+	else {
+		if (pSendBuf->empty()) {
+			pIOEM->disableWriting();
+		}
 	}
 }
 
@@ -126,5 +133,5 @@ void TcpConnection::handleClose()
 {
 	pconfd->close();
 	std::cerr << pconfd->getPeerAddr() + ":" << pconfd->getPeerPort() << " leaves."<< std::endl;
-	closeCallBack(pconfd->getSockfd());
+	closeCallBack();
 }

@@ -15,10 +15,16 @@ class IOEventManager;
 class EventLoop {
 public:
 	EventLoop();
-	~EventLoop();
+	~EventLoop(){}
+
+	EventLoop(const EventLoop &) = delete;
+	EventLoop &operator=(const EventLoop &) = delete;
+	EventLoop(EventLoop &&) = delete;
+	EventLoop &operator=(EventLoop &&) = delete;
 
 	void loop();
 
+	void addIOEM(IOEventManager *pIOEM);
 	void updateIOEM(IOEventManager *pIOEM);
 	void deleteIOEM(IOEventManager *pIOEM);
 

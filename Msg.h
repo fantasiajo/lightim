@@ -11,29 +11,45 @@
 class Msg {
 public:
 	enum MSG_TYPE {
-		CONFIRM,
+		CONFIRM,//server <-> client
 		//|type|
-		SIGN_UP,
+		SIGN_UP,//server <- client
 		//|nickname 32 bytes|pwdmd5 32 bytes|
-		SIGN_UP_ANS,
+		SIGN_UP_ANS,//server -> client
 		//|successorfail 1 byte|
-		LOGIN_IN,
+		LOGIN_IN,//server <- client
 		//|id 4 bytes|pwdmd5 32bytes|
-		LOGIN_IN_ANS,
+		LOGIN_IN_ANS,//server -> client
 		//|successorfail 1 byte|fialtype 1 byte|
 		SHOW_SB,
 		SHOW_SB_ANS,
-		ADD_SB,
-		ADD_SB_ANS,
+		ADD_SB,//server <- client
+		//|id 4 bytes|
+		ADD_FROM_SB,//server -> client
+		//|id 4 bytes|
+		AGREE_SB,//server <- client
+		//|id 4 bytes|
+		AGREE_FROM_SB,//server -> client
+		//|id 4 bytes|
 		DELETE_SB,
 		DELETE_SB_ANS,
 		TO_SB,
 		//|targetid 4 bytes|content len - 3 - 4 bytes|
-		FROM_SB
+		FROM_SB,
+		//|targetid 4 bytes|content len - 3 - 4 bytes|
+		GET_FRIENDS,
+		//||
+		GET_FRIENDS_ANS
+		//|id 4 + nickname 32|...
 	};
 
 	Msg(uint16_t _len, MSG_TYPE _type);
 	~Msg();
+
+	Msg(const Msg &) = delete;
+	Msg &operator=(const Msg &) = delete;
+	Msg(Msg &&) = delete;
+	Msg &operator=(Msg &&) = delete;
 
 	char *getBuf() {
 		return buf;

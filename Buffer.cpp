@@ -11,10 +11,6 @@ Buffer::Buffer(bool _isSend)
 	}
 }
 
-Buffer::~Buffer() {
-
-}
-
 bool Buffer::allConfirm() {
 	return confirmIndex == writeIndex;
 }
@@ -62,7 +58,7 @@ uint32_t Buffer::getUint32()
 {
 	auto tmp = readIndex;
 	readIndex += sizeof(uint32_t);
-	return ::ntohs(*((uint32_t *)(&str[tmp])));
+	return ::ntohl(*((uint32_t *)(&str[tmp])));
 }
 
 uint8_t Buffer::getUint8()
@@ -97,9 +93,23 @@ int Buffer::writeout(Socket *psocket)
 	return cnt;
 }
 
+void Buffer::reset()
+{
+	if (confirmIndex == readIndex) return;
+	auto len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
+	auto type = *(uint8_t *)(&str[confirmIndex + 2]);
+	while (type == Msg::MSG_TYPE::CONFIRM) {
+		confirmIndex += len;
+		len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
+		type = *(uint8_t *)(&str[confirmIndex + 2]);
+	}
+	readIndex = confirmIndex;
+}
+
 void Buffer::pushMsg(std::shared_ptr<Msg> pMsg)
 {
 	in(pMsg->getBuf(), pMsg->getLen());
+	msgWritenCallback();
 }
 
 void Buffer::pushMsgInLoop(std::shared_ptr<Msg> pMsg)
@@ -108,7 +118,7 @@ void Buffer::pushMsgInLoop(std::shared_ptr<Msg> pMsg)
 		pushMsg(pMsg);
 	}
 	else {
-		ploop->queueInLoop(std::bind(&Buffer::pushMsgInLoop, this, pMsg));
+		ploop->queueInLoop(std::bind(&Buffer::pushMsgInLoop, this, pMsg));//连续递归，直到到达负责该buffer的loop所在的线程
 	}
 }
 
@@ -121,4 +131,9 @@ void Buffer::confirm() {
 		type = *(uint8_t *)(&str[confirmIndex + 2]);
 	}
 	confirmIndex += len;
+}
+
+void Buffer::setMsgWritenCallback(const std::function<void()>& cb)
+{
+	msgWritenCallback = cb;
 }

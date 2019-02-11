@@ -6,7 +6,7 @@
 
 #define HOST "localhost"
 #define USER "root"
-#define PWD "root"
+#define PWD ""
 #define DB_NAME "lightim"
 
 class QUERY_RESULT {
@@ -33,7 +33,13 @@ public:
 	DB(std::string host, std::string user, std::string pwd, std::string db_name);
 	~DB();
 
+	DB(const DB &) = delete;
+	DB &operator=(const DB &) = delete;
+	DB(DB &&) = delete;
+	DB &operator=(DB &&) = delete;
+
 	bool exeSQL(std::string sql, QUERY_RESULT &queryResult);
+	std::string escape(const std::string &content);
 		
 private:
 	MYSQL *conn;

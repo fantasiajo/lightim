@@ -10,8 +10,11 @@ class IOEventManager;
 class Acceptor {
 public:
 	Acceptor(EventLoop *_ploop,std::string ip, unsigned short port);
-
-	~Acceptor();
+	~Acceptor(){}
+	Acceptor(const Acceptor &) = delete;
+	Acceptor & operator=(const Acceptor &) = delete;
+	Acceptor(Acceptor &&) = delete;
+	Acceptor & operator=(Acceptor &&) = delete;
 
 	void listen();
 
@@ -26,7 +29,6 @@ private:
 
 	std::shared_ptr<IOEventManager> pIOEM;
 	
-
 	std::function<void(std::shared_ptr<Socket>)> newConnectionCallBack;
 };
 

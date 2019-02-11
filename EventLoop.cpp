@@ -28,14 +28,36 @@ void EventLoop::loop() {
 	}
 }
 
+
+
+void EventLoop::addIOEM(IOEventManager * pIOEM)
+{
+	if (isInLoopThread()) {
+		pEpoller->addIOEM(pIOEM);
+	}
+	else {
+		queueInLoop(std::bind(&Epoller::addIOEM, pEpoller.get(), pIOEM));
+	}
+}
+
 void EventLoop::updateIOEM(IOEventManager * pIOEM)
 {
-	pEpoller->updateFdIOEM(pIOEM);
+	if (isInLoopThread()) {
+		pEpoller->updateIOEM(pIOEM);
+	}
+	else {
+		queueInLoop(std::bind(&Epoller::updateIOEM, pEpoller.get(), pIOEM));
+	}
 }
 
 void EventLoop::deleteIOEM(IOEventManager * pIOEM)
 {
-	pEpoller->deleteFdIOEM(pIOEM);
+	if (isInLoopThread()) {
+		pEpoller->deleteIOEM(pIOEM);
+	}
+	else {
+		queueInLoop(std::bind(&Epoller::deleteIOEM, pEpoller.get(), pIOEM));
+	}
 }
 
 void EventLoop::readEventFd()
