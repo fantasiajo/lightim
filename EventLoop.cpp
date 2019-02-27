@@ -3,7 +3,9 @@
 #include "Epoller.h"
 #include "unistd.h"
 #include "DB.h"
-#include <iostream>
+#include "easylogging++.h"
+#include <mutex>
+#include <cerrno>
 
 EventLoop::EventLoop()
 	:tid(std::this_thread::get_id()),
@@ -15,8 +17,6 @@ EventLoop::EventLoop()
 	event_fd_ioem->enableReading();
 	event_fd_ioem->setReadCallBack(std::bind(&EventLoop::readEventFd,this));
 }
-
-EventLoop::~EventLoop() {}
 
 void EventLoop::loop() {
 	while (true) {
@@ -64,8 +64,9 @@ void EventLoop::readEventFd()
 {
 	uint64_t n;
 	if (read(event_fd, &n, sizeof(n)) != sizeof(n)) {
-		std::cerr << "read eventfd fail" << std::endl;
-		std::cerr << errno << std::endl;
+		LOG(FATAL) << "read eventfd fail:" << strerror(errno);
+		//std::cerr << "read eventfd fail" << std::endl;
+		//std::cerr << errno << std::endl;
 	}
 }
 
@@ -73,8 +74,9 @@ void EventLoop::writeEventFd()
 {
 	uint64_t n = 1;
 	if (write(event_fd, &n, sizeof(n)) != sizeof(n)) {
-		std::cerr << "write eventfd fail" << std::endl;
-		std::cerr << errno << std::endl;
+		LOG(FATAL) << "write eventfd fail:" << strerror(errno);
+		//std::cerr << "write eventfd fail" << std::endl;
+		//std::cerr << errno << std::endl;
 	}
 }
 
@@ -95,9 +97,10 @@ void EventLoop::runInLoop(const Task &task) {
 
 void EventLoop::queueInLoop(const Task & task)
 {
-	mtx_tasks.lock();
-	tasks.push_back(task);
-	mtx_tasks.unlock();
+	{
+		std::unique_lock<std::mutex> lck(mtx_tasks);
+		tasks.push_back(task);
+	}
 	wakeup();
 }
 
@@ -107,11 +110,10 @@ void EventLoop::wakeup() {
 
 void EventLoop::do_pending_task() {
 	std::vector<Task> tmptasks;
-
-	mtx_tasks.lock();
-	std::swap(tmptasks, tasks);
-	mtx_tasks.unlock();
-
+	{
+		std::unique_lock<std::mutex> lck(mtx_tasks);
+		std::swap(tmptasks, tasks);
+	}
 	for (const auto &task : tmptasks) {
 		task();
 	}

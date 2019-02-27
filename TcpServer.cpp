@@ -61,7 +61,7 @@ void TcpServer::forwardMsg(uint32_t id, std::shared_ptr<Msg> pMsg)
 void TcpServer::forwardNotify(uint32_t id)
 {
 	if (!userMap[id].tmpPTcpConn.expired()) {//如果id目前在线，则启动写监听
-		userMap[id].tmpPTcpConn.lock()->getPIOEM()->enableWriting();//bug,启用监听时可能信息还排在queue，会检测到没有信息而关闭监听
+		userMap[id].tmpPTcpConn.lock()->getPIOEM()->enableWriting();
 	}
 }
 

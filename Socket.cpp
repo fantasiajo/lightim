@@ -21,25 +21,26 @@ Socket::Socket(std::string _ip, unsigned short _port)
 	:sockfd(socket(AF_INET,SOCK_STREAM | O_NONBLOCK,0))
 {
 	if (sockfd == -1) {
-		std::cerr << "socket create failed.\n";
+		LOG(FATAL) << "socket create failed.";
+		exit(1);
 	}
 
+	//开启地址复用来解决time_wait问题
 	int optval = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
-		//log.err
+		LOG(FATAL) << "reuseaddr failed.";
 		exit(1);
 	}
 	int status = inet_pton(AF_INET, _ip.c_str(), &addr);
 	if (status == -1) {
-		//log.err
+		LOG(FATAL) << "inet_pton:" << strerror(errno);
 		exit(1);
 	}
 	if (status == 0) {
-		//log.err.ipcharformat
+		LOG(FATAL) << "inet_pton:" << strerror(errno);
 		exit(1);
 	}
 	port = htons(_port);
-	
 }
 
 Socket::~Socket()
@@ -52,36 +53,34 @@ void Socket::bind() {
 	sockaddr.sin_port = port;
 	sockaddr.sin_addr = addr;
 	if (::bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == -1) {
-		std::cerr << "bind failed.\n";
-		perror("bind");
-		abort();
+		LOG(FATAL) << "bind:" << strerror(errno);
+		exit(1);
 	}
 }
 
 void Socket::listen()
 {
 	type = LISTENING_SOCKET;
-	int cnt=999;
+	int cnt;
 	if (cnt = ::listen(sockfd, backlog) == -1) {
-		perror("listen");
-		abort();
+		LOG(FATAL) << "bind:" << strerror(errno);
+		exit(1);
 	}
 }
 
 std::shared_ptr<Socket> Socket::accept() {
 	int tmpfd = ::accept4(sockfd,NULL,0, SOCK_NONBLOCK);
 	if (tmpfd == -1) {
-		perror("accept4");
-		fflush(stderr);
-		exit(1);
+		LOG(FATAL) << "accept4:" << strerror(errno);
+		return nullptr;
 	}
 
 	struct sockaddr_in sockaddr;
 	socklen_t len=sizeof(sockaddr_in);
 
 	if (getpeername(tmpfd, (struct sockaddr *)&sockaddr, &len) == -1) {
-		std::cout << "getpeername" << std::endl;
-		exit(1);
+		LOG(FATAL) << "getpeername:" << strerror(errno);
+		return nullptr;
 	}
 
 	std::shared_ptr<Socket> psocket(new Socket());
@@ -99,7 +98,7 @@ void Socket::close()
 {
 	::close(sockfd);
 }
-
+/*
 int Socket::connect(std::string ip, unsigned short _port,int timeout)
 {
 	int status = inet_pton(AF_INET, ip.c_str(), &addr);
@@ -154,7 +153,7 @@ int Socket::connect(std::string ip, unsigned short _port,int timeout)
 	}
 	return 0;
 
-	/*
+	
 	
 	if (::connect(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == -1) {
 		LOG(ERROR) << "connect." << strerror(errno);
@@ -173,8 +172,9 @@ int Socket::connect(std::string ip, unsigned short _port,int timeout)
 	peerAddr = sockaddr.sin_addr;
 	peerPort = sockaddr.sin_port;
 	return 0;
-	*/
+	
 }
+*/
 
 
 int Socket::getSockfd() const{
@@ -185,7 +185,7 @@ std::string Socket::getAddr() const{
 	char ip[INET_ADDRSTRLEN];
 	const char *ans = inet_ntop(AF_INET, &addr, ip, sizeof(ip));
 	if (!ans) {
-		std::cout << "inet_ntop" << std::endl;
+		LOG(FATAL) << "inet_ntop:" << strerror(errno);
 		exit(1);
 	}
 	return std::string(ans);
@@ -200,7 +200,7 @@ std::string Socket::getPeerAddr() const
 	char ip[INET_ADDRSTRLEN];
 	const char *ans = inet_ntop(AF_INET, &peerAddr, ip, sizeof(ip));
 	if (!ans) {
-		std::cout << "inet_ntop" << std::endl;
+		LOG(FATAL) << "inet_ntop:" << strerror(errno);
 		exit(1);
 	}
 	return std::string(ans);
@@ -223,7 +223,8 @@ int Socket::read(char * buffer, int length)
 int Socket::readAbleNum() {
 	int num;
 	if (ioctl(sockfd, FIONREAD, &num) == -1) {
-		//log.err
+		LOG(FATAL) << "ioctl:" << strerror(errno);
+		return 0;
 	}
 	return num;
 }
