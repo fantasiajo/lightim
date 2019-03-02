@@ -62,6 +62,8 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 			handleToSb(pBuffer, msglen);
 			break;
 		case Msg::MSG_TYPE::GET_FRIENDS:
+			LOG(INFO) << "GET_FRIENDS from" << pTcpConnection->getfd()->getPeerAddr()
+				<< ": " << pTcpConnection->getfd()->getPeerPort() << " " << pTcpConnection->getid();
 			handleGetFriends(pBuffer);
 			break;
 		default:

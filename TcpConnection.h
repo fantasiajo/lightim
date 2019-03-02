@@ -61,7 +61,7 @@ private:
 	std::shared_ptr<Socket> pconfd;
 
 	std::shared_ptr<IOEventManager> pIOEM;
-	std::shared_ptr<TcpSession> pTcpSession;//需要改动，tcpconnection不能主导tcpsession的生命周期
+	std::shared_ptr<TcpSession> pTcpSession;
 
 	std::shared_ptr<Buffer> pRecvBuf;
 	std::shared_ptr<Buffer> pSendBuf;

@@ -25,16 +25,16 @@ void TcpServer::newConnection(std::shared_ptr<Socket> pSocket) {
 	EventLoop *pIoLoop = Singleton<EventLoopThreadManager>::instance().getNextEventLoop();
 	std::shared_ptr<TcpConnection> pTcpCon(new TcpConnection(pIoLoop, pSocket));
 	tcpConnSet.insert(pTcpCon);
-	pTcpCon->setCloseCallBack(std::bind(&TcpServer::closeConnection, this, pTcpCon));
+	pTcpCon->setCloseCallBack(std::bind(&TcpServer::closeConnection, this, std::weak_ptr<TcpConnection>(pTcpCon)));
 	pIoLoop->queueInLoop(std::bind(&TcpConnection::connectionEstablished, pTcpCon.get()));
 }
 
-void TcpServer::closeConnection(std::shared_ptr<TcpConnection> pTcpConn)
+void TcpServer::closeConnection(std::weak_ptr<TcpConnection> pTcpConn)
 {
-	tcpConnSet.erase(pTcpConn);
+	tcpConnSet.erase(pTcpConn.lock());
 }
 
-void TcpServer::login(uint32_t id, std::shared_ptr<TcpConnection> pTcpConn)
+void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
 {
 	auto iter = userMap.find(id);
 	if (iter == userMap.end()) {
@@ -42,11 +42,12 @@ void TcpServer::login(uint32_t id, std::shared_ptr<TcpConnection> pTcpConn)
 		userMap[id].tmpPTcpConn = pTcpConn;
 	}
 	
-	userMap[id].pSendBuf->setLoop(pTcpConn->getloop());
+	userMap[id].pSendBuf->setLoop(pTcpConn.lock()->getloop());
 	userMap[id].pSendBuf->reset();
 	userMap[id].pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify,this,id));
 
-	pTcpConn->setSendBuf(userMap[id].pSendBuf);
+	pTcpConn.lock()->setSendBuf(userMap[id].pSendBuf);
+	pTcpConn.lock()->setid(id);
 }
 
 void TcpServer::forwardMsg(uint32_t id, std::shared_ptr<Msg> pMsg)

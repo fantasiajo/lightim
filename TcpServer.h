@@ -30,9 +30,9 @@ public:
 	void start();
 
 	void newConnection(std::shared_ptr<Socket> pSocket);
-	void closeConnection(std::shared_ptr<TcpConnection> pTcpConn);
+	void closeConnection(std::weak_ptr<TcpConnection> pTcpConn);
 
-	void login(uint32_t id, std::shared_ptr<TcpConnection> pTcpConn);
+	void login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn);
 
 	void forwardMsg(uint32_t, std::shared_ptr<Msg> pMsg);
 

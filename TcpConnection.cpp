@@ -6,6 +6,7 @@
 #include "Msg.h"
 #include "TcpServer.h"
 #include "Singleton.h"
+#include "easylogging++.h"
 #include <string>
 #include <iostream>
 
@@ -26,7 +27,7 @@ TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 void TcpConnection::connectionEstablished()
 {
 	pTcpSession.reset(new TcpSession(ploop,this));
-	pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,this->shared_from_this()));
+	pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,std::weak_ptr<TcpConnection>(this->shared_from_this())));
 	pTcpSession->setConfirmCallback(std::bind(&TcpConnection::confirm,this));
 	setMsgCallBack(std::bind(&TcpSession::handleMsg, pTcpSession.get(), pRecvBuf.get()));
 	pIOEM->enableReading();
@@ -132,6 +133,6 @@ void TcpConnection::handleError()
 void TcpConnection::handleClose()
 {
 	pconfd->close();
-	std::cerr << pconfd->getPeerAddr() + ":" << pconfd->getPeerPort() << " leaves."<< std::endl;
+	LOG(INFO) << pconfd->getPeerAddr() + ":" << pconfd->getPeerPort() << " leaves.";
 	closeCallBack();
 }

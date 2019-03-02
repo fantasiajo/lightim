@@ -79,11 +79,12 @@ void IOEventManager::update() {
 }
 
 void IOEventManager::handleEvent() {
+	//一次只处理一个事件
 	if (recvEvents & (EPOLLIN | EPOLLPRI)) {
 		//std::cout << type + " " + ip + ":" << port << std::endl;
 		readCallBack();
 	}
-	if (recvEvents & EPOLLOUT) {
+	else if (recvEvents & EPOLLOUT) {
 		writeCallBack();
 	}
 	/*
