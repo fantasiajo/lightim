@@ -31,12 +31,18 @@ public:
 
 	void newConnection(std::shared_ptr<Socket> pSocket);
 	void closeConnection(std::weak_ptr<TcpConnection> pTcpConn);
+	void closeConnection_(std::weak_ptr<TcpConnection> pTcpConn);
 
+	void loginInLoop(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn);
 	void login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn);
 
 	void forwardMsg(uint32_t, std::shared_ptr<Msg> pMsg);
 
 	void forwardNotify(uint32_t id);
+
+	bool isOnLine(uint32_t id) {
+		return !userMap[id].tmpPTcpConn.expired();
+	}
 
 private:
 	EventLoop *ploop;

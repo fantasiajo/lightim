@@ -8,6 +8,7 @@
 #include "IOEventManager.h"
 #include <iostream>
 #include "Buffer.h"
+#include <unordered_set>
 
 void TcpServer::init(EventLoop *_ploop,std::string ip, unsigned short port)
 {
@@ -31,7 +32,17 @@ void TcpServer::newConnection(std::shared_ptr<Socket> pSocket) {
 
 void TcpServer::closeConnection(std::weak_ptr<TcpConnection> pTcpConn)
 {
+	ploop->queueInLoop(std::bind(&TcpServer::closeConnection_, this, pTcpConn));
+}
+
+void TcpServer::closeConnection_(std::weak_ptr<TcpConnection> pTcpConn)
+{
 	tcpConnSet.erase(pTcpConn.lock());
+}
+
+void TcpServer::loginInLoop(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
+{
+	ploop->queueInLoop(std::bind(&TcpServer::login, this, id, pTcpConn));
 }
 
 void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)

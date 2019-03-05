@@ -135,7 +135,7 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 	id = pBuffer->getUint32();
 	std::string pwd = pBuffer->getString(32);
 	if (UserManager::exists(ploop,id, pwd)) {//存在该用户
-		if (login) {//当前已登录
+		if (Singleton<TcpServer>::instance().isOnLine(id)) {//当前已登录
 			std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 2, Msg::MSG_TYPE::LOGIN_IN_ANS));
 			pMsg->writeUint8(FAIL);
 			pMsg->writeUint8(LOGINED);

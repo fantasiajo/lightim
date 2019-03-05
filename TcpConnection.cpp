@@ -27,7 +27,7 @@ TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 void TcpConnection::connectionEstablished()
 {
 	pTcpSession.reset(new TcpSession(ploop,this));
-	pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,std::weak_ptr<TcpConnection>(this->shared_from_this())));
+	pTcpSession->setLoginCallback(std::bind(&TcpServer::loginInLoop,&Singleton<TcpServer>::instance(), std::placeholders::_1,std::weak_ptr<TcpConnection>(this->shared_from_this())));
 	pTcpSession->setConfirmCallback(std::bind(&TcpConnection::confirm,this));
 	setMsgCallBack(std::bind(&TcpSession::handleMsg, pTcpSession.get(), pRecvBuf.get()));
 	pIOEM->enableReading();
