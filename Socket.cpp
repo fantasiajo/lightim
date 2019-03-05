@@ -9,7 +9,7 @@
 
 
 Socket::Socket()
-	:sockfd(socket(AF_INET, SOCK_STREAM | O_NONBLOCK, 0))
+	:sockfd(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0))
 {
 	if (sockfd == -1) {
 		LOG(FATAL) << "socket create failed.";
@@ -18,7 +18,7 @@ Socket::Socket()
 }
 
 Socket::Socket(std::string _ip, unsigned short _port)
-	:sockfd(socket(AF_INET,SOCK_STREAM | O_NONBLOCK,0))
+	:sockfd(socket(AF_INET,SOCK_STREAM | SOCK_NONBLOCK,0))
 {
 	if (sockfd == -1) {
 		LOG(FATAL) << "socket create failed.";
@@ -28,6 +28,10 @@ Socket::Socket(std::string _ip, unsigned short _port)
 	//开启地址复用来解决time_wait问题
 	int optval = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
+		LOG(FATAL) << "reuseaddr failed.";
+		exit(1);
+	}
+	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) == -1) {
 		LOG(FATAL) << "reuseaddr failed.";
 		exit(1);
 	}
