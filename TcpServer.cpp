@@ -54,10 +54,10 @@ void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
 	}
 	
 	userMap[id].pSendBuf->setLoop(pTcpConn.lock()->getloop());
-	userMap[id].pSendBuf->reset();
+	userMap[id].pSendBuf->reset();//前移confirmindex到最近的readindex
 	userMap[id].pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify,this,id));
 
-	pTcpConn.lock()->setSendBuf(userMap[id].pSendBuf);
+	pTcpConn.lock()->setSendBuf(userMap[id].pSendBuf);//启动监听？
 	pTcpConn.lock()->setid(id);
 }
 

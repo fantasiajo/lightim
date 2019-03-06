@@ -20,7 +20,9 @@ void Acceptor::listen()
 void Acceptor::accept()
 {
 	std::shared_ptr<Socket> pconsocket = plisfd->accept();
-	newConnectionCallBack(pconsocket);
+	if (pconsocket) {
+		newConnectionCallBack(pconsocket);
+	}
 }
 
 void Acceptor::setNewConnectionCallBack(std::function<void(std::shared_ptr<Socket>)> cb) {
