@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <shared_mutex>
 
 class EventLoop;
 class TcpConnection;
@@ -41,6 +42,7 @@ public:
 	void forwardNotify(uint32_t id);
 
 	bool isOnLine(uint32_t id) {
+		std::shared_lock<std::shared_mutex> lck(mtxUserMap);
 		return !userMap[id].tmpPTcpConn.expired();
 	}
 
@@ -50,5 +52,6 @@ private:
 	std::shared_ptr<Acceptor> pAcceptor;
 	std::unordered_set<std::shared_ptr<TcpConnection>> tcpConnSet;
 	std::unordered_map<uint32_t, UserInfo> userMap;//用户id-（发送buffer，负责的连接）
+	std::shared_mutex mtxUserMap;
 };
 

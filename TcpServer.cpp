@@ -47,33 +47,47 @@ void TcpServer::loginInLoop(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
 
 void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
 {
-	auto iter = userMap.find(id);
-	if (iter == userMap.end()) {
-		userMap[id].pSendBuf = std::make_shared<Buffer>(true);
-		userMap[id].tmpPTcpConn = pTcpConn;
+	{
+		std::unique_lock<std::shared_mutex> lck(mtxUserMap);
+		auto iter = userMap.find(id);
+		if (iter == userMap.end()) {
+			userMap[id].tmpPTcpConn = pTcpConn;
+		}
 	}
-	
-	userMap[id].pSendBuf->setLoop(pTcpConn.lock()->getloop());
-	userMap[id].pSendBuf->reset();//前移confirmindex到最近的readindex
-	userMap[id].pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify,this,id));
+	std::shared_lock<std::shared_mutex> sharelck(mtxUserMap);
+	UserInfo &tmpUserInfo = userMap[id];//将值提出来操作，减小临界区
+	sharelck.unlock();
 
-	pTcpConn.lock()->setSendBuf(userMap[id].pSendBuf);//启动监听？
-	pTcpConn.lock()->setid(id);
+	tmpUserInfo.pSendBuf = std::make_shared<Buffer>(true);
+	tmpUserInfo.pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify, this, id));
+	tmpUserInfo.pSendBuf->setLoop(pTcpConn.lock()->getloop());
+	tmpUserInfo.pSendBuf->reset();//前移confirmindex到最近的readindex
+
+	std::shared_ptr<TcpConnection> tmpTcpConn = pTcpConn.lock();
+	if (tmpTcpConn) {
+		tmpTcpConn->setSendBuf(userMap[id].pSendBuf);//启动监听？
+		tmpTcpConn->setid(id);
+	}
 }
 
 void TcpServer::forwardMsg(uint32_t id, std::shared_ptr<Msg> pMsg)
 {
-	//如果没有在usermap中找到id，说明从来没有登陆过，视为没有此用户。从而不用加锁。
+	std::shared_lock<std::shared_mutex> lck(mtxUserMap);
 	auto iter = userMap.find(id);
 	if (iter != userMap.end()) {
-		userMap[id].pSendBuf->pushMsgInLoop(pMsg);
+		iter->second.pSendBuf->pushMsgInLoop(pMsg);
 	}
 }
 
 void TcpServer::forwardNotify(uint32_t id)
 {
-	if (!userMap[id].tmpPTcpConn.expired()) {//如果id目前在线，则启动写监听
-		userMap[id].tmpPTcpConn.lock()->getPIOEM()->enableWriting();
+	std::shared_ptr<TcpConnection> pTcpConn;
+	{
+		std::shared_lock<std::shared_mutex> lck(mtxUserMap);
+		pTcpConn = userMap[id].tmpPTcpConn.lock();
+	}
+	if (pTcpConn) {//如果id目前在线，则启动写监听
+		pTcpConn->getPIOEM()->enableWriting();
 	}
 }
 

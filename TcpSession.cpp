@@ -91,7 +91,7 @@ void TcpSession::handleConfirm(Buffer * pBuffer)
 			loginCallback(id);
 		}
 	}
-	else {
+	else {//因为登陆时会改变sendBuf，所以不需要调用confirmcallback
 		confirmCallback();
 	}
 }
