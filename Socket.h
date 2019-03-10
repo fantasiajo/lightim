@@ -47,5 +47,5 @@ private:
 	Port port;
 	IP peerAddr;
 	Port peerPort;
-	int backlog = 10;
+	int backlog = SOMAXCONN;
 };

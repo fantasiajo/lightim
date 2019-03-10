@@ -80,5 +80,7 @@ bool UserManager::getFriends(EventLoop * ploop, uint32_t id, std::vector<std::pa
 			idname[i].first = std::stoul(res.dataMatrix[i][0]);
 			idname[i].second = res.dataMatrix[i][1];
 		}
+		return true;
 	}
+	return false;
 }

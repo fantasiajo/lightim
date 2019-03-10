@@ -52,21 +52,22 @@ void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
 		auto iter = userMap.find(id);
 		if (iter == userMap.end()) {
 			userMap[id].tmpPTcpConn = pTcpConn;
+			userMap[id].pSendBuf = std::make_shared<Buffer>(true);
+			userMap[id].pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify, this, id));
 		}
 	}
 	std::shared_lock<std::shared_mutex> sharelck(mtxUserMap);
 	UserInfo &tmpUserInfo = userMap[id];//将值提出来操作，减小临界区
 	sharelck.unlock();
 
-	tmpUserInfo.pSendBuf = std::make_shared<Buffer>(true);
-	tmpUserInfo.pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify, this, id));
 	tmpUserInfo.pSendBuf->setLoop(pTcpConn.lock()->getloop());
 	tmpUserInfo.pSendBuf->reset();//前移confirmindex到最近的readindex
 
 	std::shared_ptr<TcpConnection> tmpTcpConn = pTcpConn.lock();
 	if (tmpTcpConn) {
-		tmpTcpConn->setSendBuf(userMap[id].pSendBuf);//启动监听？
+		tmpTcpConn->setSendBuf(tmpUserInfo.pSendBuf);
 		tmpTcpConn->setid(id);
+		tmpTcpConn->getloop()->queueInLoop(std::bind(&TcpServer::forwardNotify,this,id));
 	}
 }
 
@@ -79,7 +80,7 @@ void TcpServer::forwardMsg(uint32_t id, std::shared_ptr<Msg> pMsg)
 	}
 }
 
-void TcpServer::forwardNotify(uint32_t id)
+void TcpServer::forwardNotify(uint32_t id)//只有id所在线程会调用此函数
 {
 	std::shared_ptr<TcpConnection> pTcpConn;
 	{
