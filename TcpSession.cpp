@@ -204,6 +204,7 @@ void TcpSession::handleToSb(Buffer *pBuffer,int msglen)
 	pMsg->writeUint32(id);
 	auto content = pBuffer->getString(msglen - Msg::headerLen - 4);
 	UserManager::addChat(ploop,id,targetid,content);
+	LOG(INFO) << "From " << id << " to " << targetid << ":" << content << std::endl;
 	pMsg->writeString(content.c_str(), content.length());
 
 	Singleton<TcpServer>::instance().forwardMsg(targetid, pMsg);

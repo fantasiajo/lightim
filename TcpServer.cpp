@@ -9,12 +9,15 @@
 #include <iostream>
 #include "Buffer.h"
 #include <unordered_set>
+#include "UserManager.h"
+#include "easylogging++.h"
 
 void TcpServer::init(EventLoop *_ploop,std::string ip, unsigned short port)
 {
 	ploop = _ploop;
 	pAcceptor.reset(new Acceptor(ploop, ip, port));
 	pAcceptor->setNewConnectionCallBack(std::bind(&TcpServer::newConnection,this,std::placeholders::_1));
+	loadUserBuffer();
 }
 
 void TcpServer::start()
@@ -51,7 +54,6 @@ void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
 		std::unique_lock<std::shared_mutex> lck(mtxUserMap);
 		auto iter = userMap.find(id);
 		if (iter == userMap.end()) {
-			userMap[id].tmpPTcpConn = pTcpConn;
 			userMap[id].pSendBuf = std::make_shared<Buffer>(true);
 			userMap[id].pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify, this, id));
 		}
@@ -65,6 +67,7 @@ void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
 
 	std::shared_ptr<TcpConnection> tmpTcpConn = pTcpConn.lock();
 	if (tmpTcpConn) {
+		tmpUserInfo.tmpPTcpConn = tmpTcpConn;
 		tmpTcpConn->setSendBuf(tmpUserInfo.pSendBuf);
 		tmpTcpConn->setid(id);
 		tmpTcpConn->getloop()->queueInLoop(std::bind(&TcpServer::forwardNotify,this,id));
@@ -92,3 +95,16 @@ void TcpServer::forwardNotify(uint32_t id)//只有id所在线程会调用此函�
 	}
 }
 
+void TcpServer::loadUserBuffer() {
+	std::vector<uint32_t> ids;
+	if (UserManager::getAllUsers(ploop, ids)) {
+		for (const auto &id : ids) {
+			userMap[id].pSendBuf = std::make_shared<Buffer>(true);
+			userMap[id].pSendBuf->setLoop(Singleton<EventLoopThreadManager>::instance().getNextEventLoop());
+			userMap[id].pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify, this, id));
+		}
+	}
+	else {
+		LOG(ERROR) << "loadUserBuffer failed.";
+	}
+}

@@ -18,6 +18,7 @@ public:
 	static bool addChat(EventLoop *ploop, int fromid, int toid, std::string content);
 	static bool addFriend(EventLoop * ploop, uint32_t id1,uint32_t id2);
 	static bool getFriends(EventLoop *ploop, uint32_t id, std::vector<std::pair<uint32_t, std::string>> &idname);
+	static bool getAllUsers(EventLoop *ploop, std::vector<uint32_t> &ids);
 private:
 	EventLoop *ploop;
 };

@@ -43,6 +43,7 @@ public:
 
 	bool isOnLine(uint32_t id) {
 		std::shared_lock<std::shared_mutex> lck(mtxUserMap);
+		if (userMap.find(id) == userMap.end()) return false;
 		return !userMap[id].tmpPTcpConn.expired();
 	}
 
@@ -53,5 +54,7 @@ private:
 	std::unordered_set<std::shared_ptr<TcpConnection>> tcpConnSet;
 	std::unordered_map<uint32_t, UserInfo> userMap;//用户id-（发送buffer，负责的连接）
 	std::shared_mutex mtxUserMap;
+
+	void loadUserBuffer();
 };
 

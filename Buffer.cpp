@@ -97,11 +97,11 @@ void Buffer::reset()
 {
 	if (confirmIndex == readIndex) return;
 	auto len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
-	auto type = *(uint8_t *)(&str[confirmIndex + 2]);
-	while (type == Msg::MSG_TYPE::CONFIRM) {
+	auto type = *((uint8_t *)(&str[confirmIndex + 2]));
+	while (confirmIndex!=readIndex && type == Msg::MSG_TYPE::CONFIRM) {
 		confirmIndex += len;
 		len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
-		type = *(uint8_t *)(&str[confirmIndex + 2]);
+		type = *((uint8_t *)(&str[confirmIndex + 2]));
 	}
 	readIndex = confirmIndex;
 }

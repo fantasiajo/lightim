@@ -5,16 +5,13 @@
 template <typename T>
 class Singleton {
 public:
+	Singleton() = delete;
+	~Singleton() = delete;
+	Singleton(const Singleton &) = delete;
+	Singleton(Singleton &&) = delete;
 	static T& instance() {
-		if (!pT) {
-			pT.reset(new T());
-		}
-		return *pT;
+		static T ins;
+		return ins;
 	}
-private:
-	static std::shared_ptr<T> pT;
 };
-
-template <typename T>
-std::shared_ptr<T> Singleton<T>::pT;
 

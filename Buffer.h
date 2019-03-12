@@ -43,6 +43,9 @@ public:
 	void setLoop(EventLoop *_ploop) {
 		ploop = _ploop;
 	}
+	EventLoop *getLoop() {
+		return ploop;
+	}
 
 	void reset();
 

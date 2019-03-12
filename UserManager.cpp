@@ -84,3 +84,13 @@ bool UserManager::getFriends(EventLoop * ploop, uint32_t id, std::vector<std::pa
 	}
 	return false;
 }
+bool UserManager::getAllUsers(EventLoop *ploop, std::vector<uint32_t> &ids) {
+	QUERY_RESULT res;
+	std::string sql("select user_id from user");
+	if (ploop->getDb()->exeSQL(sql, res)) {
+		ids.resize(res.dataMatrix.size());
+		for (int i = 0; i < res.dataMatrix.size(); ++i) {
+			ids[i] = std::stoul(res.dataMatrix[i][0]);
+		}
+	}
+}

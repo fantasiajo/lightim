@@ -17,9 +17,8 @@ EventLoopThreadManager::getNextEventLoop() {
 	if (ploops.empty()) {
 		return nullptr;
 	}
-	if (next == ploops.size() - 1) {
+	if (next == ploops.size()) {
 		next = 0;
-		return ploops.back().get();
 	}
 	return ploops[next++].get();
 }
