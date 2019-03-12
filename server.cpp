@@ -12,7 +12,6 @@ INITIALIZE_EASYLOGGINGPP//初始化easylogging
 int main() {
 	//配置日志格式
 	el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %thread %level: %msg");
-
 	LOG(INFO) << "Welcome to lightim!";
 	EventLoop loop;
 	Singleton<EventLoopThreadManager>::instance().newEventLoopThread(4);
