@@ -1,6 +1,8 @@
 #include "Msg.h"
 #include "easylogging++.h"
 #include <cstring>
+#include "Singleton.h"
+#include "LogManager.h"
 
 Msg::Msg(uint16_t _len, MSG_TYPE _type)
 	:type(_type),
@@ -10,7 +12,9 @@ Msg::Msg(uint16_t _len, MSG_TYPE _type)
 {
 	buf = (char *)malloc(len);
 	if (!buf) {
-		LOG(FATAL) << "malloc failed";
+		//LOG(FATAL) << "malloc failed";
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "malloc failed.");
+		//todo sleep
 		exit(1);
 	}
 	writeUint16(len);

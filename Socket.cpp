@@ -6,13 +6,16 @@
 #include "unistd.h"
 #include "easylogging++.h"
 #include "error.h"
-
+#include "LogManager.h"
+#include "Singleton.h"
 
 Socket::Socket()
 	:sockfd(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0))
 {
 	if (sockfd == -1) {
-		LOG(FATAL) << "socket create failed.";
+		//LOG(FATAL) << "socket create failed.";
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "Socket create failed");
+		//todo sleep
 		exit(1);
 	}
 }
@@ -21,27 +24,37 @@ Socket::Socket(std::string _ip, unsigned short _port)
 	:sockfd(socket(AF_INET,SOCK_STREAM | SOCK_NONBLOCK,0))
 {
 	if (sockfd == -1) {
-		LOG(FATAL) << "socket create failed.";
+		//LOG(FATAL) << "socket create failed.";
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "Socket create failed");
+		//todo sleep
 		exit(1);
 	}
 
 	//开启地址复用来解决time_wait问题
 	int optval = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
-		LOG(FATAL) << "reuseaddr failed.";
+		//LOG(FATAL) << "reuseaddr failed.";
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "Socket create failed");
+		//todo sleep
 		exit(1);
 	}
 	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) == -1) {
-		LOG(FATAL) << "reuseaddr failed.";
+		//LOG(FATAL) << "reuseaddr failed.";
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "reuseaddr failed");
+		//todo sleep
 		exit(1);
 	}
 	int status = inet_pton(AF_INET, _ip.c_str(), &addr);
 	if (status == -1) {
-		LOG(FATAL) << "inet_pton:" << strerror(errno);
+		//LOG(FATAL) << "inet_pton:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, strerror(errno));
+		//todo sleep
 		exit(1);
 	}
 	if (status == 0) {
-		LOG(FATAL) << "inet_pton:" << strerror(errno);
+		//LOG(FATAL) << "inet_pton:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, strerror(errno));
+		//todo sleep
 		exit(1);
 	}
 	port = htons(_port);
@@ -57,7 +70,9 @@ void Socket::bind() {
 	sockaddr.sin_port = port;
 	sockaddr.sin_addr = addr;
 	if (::bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) == -1) {
-		LOG(FATAL) << "bind:" << strerror(errno);
+		//LOG(FATAL) << "bind:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("bind")+strerror(errno));
+		//todo sleep
 		exit(1);
 	}
 }
@@ -67,7 +82,9 @@ void Socket::listen()
 	type = LISTENING_SOCKET;
 	int cnt;
 	if (cnt = ::listen(sockfd, backlog) == -1) {
-		LOG(FATAL) << "bind:" << strerror(errno);
+		//LOG(FATAL) << "listen:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("listen")+strerror(errno));
+		//todo sleep
 		exit(1);
 	}
 }
@@ -75,7 +92,9 @@ void Socket::listen()
 std::shared_ptr<Socket> Socket::accept() {
 	int tmpfd = ::accept4(sockfd,NULL,0, SOCK_NONBLOCK);
 	if (tmpfd == -1) {
-		LOG(FATAL) << "accept4:" << strerror(errno);
+		//LOG(FATAL) << "accept4:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("accept4")+strerror(errno));
+		//todo sleep
 		return nullptr;
 	}
 
@@ -83,7 +102,9 @@ std::shared_ptr<Socket> Socket::accept() {
 	socklen_t len=sizeof(sockaddr_in);
 
 	if (getpeername(tmpfd, (struct sockaddr *)&sockaddr, &len) == -1) {
-		LOG(FATAL) << "getpeername:" << strerror(errno);
+		//LOG(FATAL) << "getpeername:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("getpeername")+strerror(errno));
+		//todo sleep
 		return nullptr;
 	}
 
@@ -189,7 +210,9 @@ std::string Socket::getAddr() const{
 	char ip[INET_ADDRSTRLEN];
 	const char *ans = inet_ntop(AF_INET, &addr, ip, sizeof(ip));
 	if (!ans) {
-		LOG(FATAL) << "inet_ntop:" << strerror(errno);
+		//LOG(FATAL) << "inet_ntop:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "inet_ntop");
+		//todo sleep
 		exit(1);
 	}
 	return std::string(ans);
@@ -204,7 +227,9 @@ std::string Socket::getPeerAddr() const
 	char ip[INET_ADDRSTRLEN];
 	const char *ans = inet_ntop(AF_INET, &peerAddr, ip, sizeof(ip));
 	if (!ans) {
-		LOG(FATAL) << "inet_ntop:" << strerror(errno);
+		//LOG(FATAL) << "inet_ntop:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "inet_ntop");
+		//todo sleep
 		exit(1);
 	}
 	return std::string(ans);
@@ -227,7 +252,9 @@ int Socket::read(char * buffer, int length)
 int Socket::readAbleNum() {
 	int num;
 	if (ioctl(sockfd, FIONREAD, &num) == -1) {
-		LOG(FATAL) << "ioctl:" << strerror(errno);
+		//LOG(FATAL) << "ioctl:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("ioctl")+strerror(errno));
+		//todo sleep
 		return 0;
 	}
 	return num;

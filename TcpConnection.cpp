@@ -9,6 +9,7 @@
 #include "easylogging++.h"
 #include <string>
 #include <iostream>
+#include "LogManager.h"
 
 TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 	:ploop(_ploop),
@@ -133,6 +134,8 @@ void TcpConnection::handleError()
 void TcpConnection::handleClose()
 {
 	pconfd->close();
-	LOG(INFO) << pconfd->getPeerAddr() + ":" << pconfd->getPeerPort() << " leaves.";
+	std::ostringstream oss;
+	oss << pconfd->getPeerAddr() + ":" << pconfd->getPeerPort() << " leaves.";
+	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
 	closeCallBack();
 }

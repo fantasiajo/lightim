@@ -4,19 +4,22 @@
 #include "EventLoop.h"
 #include "TcpServer.h"
 #include "easylogging++.h"
+#include "LogManager.h"
 
 #define ELPP_THREAD_SAFE//启用easylogging多线程支持
 
 INITIALIZE_EASYLOGGINGPP//初始化easylogging
-
 int main() {
 	//配置日志格式
 	el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %thread %level: %msg");
-	LOG(INFO) << "Welcome to lightim!";
+	//LOG(INFO) << "Welcome to lightim!";
 	EventLoop loop;
-	Singleton<EventLoopThreadManager>::instance().newEventLoopThread(4);
+	Singleton<ThreadManager>::instance().newThread(1,
+		std::bind(&LogManager::loop, &Singleton<LogManager>::instance()));
+	Singleton<EventLoopThreadManager>::instance().newEventLoopThread(2);
 	Singleton<TcpServer>::instance().init(&loop, "0.0.0.0", 4399);
 	Singleton<TcpServer>::instance().start();
+	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, "Welcome to lightim!");
 	loop.loop();
 	return 0;
 }

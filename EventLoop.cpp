@@ -6,6 +6,8 @@
 #include "easylogging++.h"
 #include <mutex>
 #include <cerrno>
+#include "LogManager.h"
+#include "Singleton.h"
 
 EventLoop::EventLoop()
 	:tid(std::this_thread::get_id()),
@@ -64,7 +66,9 @@ void EventLoop::readEventFd()
 {
 	uint64_t n;
 	if (read(event_fd, &n, sizeof(n)) != sizeof(n)) {
-		LOG(FATAL) << "read eventfd fail:" << strerror(errno);
+		//LOG(FATAL) << "read eventfd fail:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL,
+			std::string("read eventfd fail: ") + strerror(errno));
 		//std::cerr << "read eventfd fail" << std::endl;
 		//std::cerr << errno << std::endl;
 	}
@@ -74,7 +78,9 @@ void EventLoop::writeEventFd()
 {
 	uint64_t n = 1;
 	if (write(event_fd, &n, sizeof(n)) != sizeof(n)) {
-		LOG(FATAL) << "write eventfd fail:" << strerror(errno);
+		//LOG(FATAL) << "write eventfd fail:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL,
+			std::string("write eventfd fail: ") + strerror(errno));
 		//std::cerr << "write eventfd fail" << std::endl;
 		//std::cerr << errno << std::endl;
 	}

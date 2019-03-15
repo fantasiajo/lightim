@@ -6,6 +6,7 @@
 #include "easylogging++.h"
 #include "Singleton.h"
 #include "TcpServer.h"
+#include "LogManager.h"
 
 TcpSession::TcpSession(EventLoop *_ploop,TcpConnection *_pTcpCon)
 	:ploop(_ploop),
@@ -37,13 +38,25 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 			handleConfirm(pBuffer);
 			break;
 		case Msg::MSG_TYPE::SIGN_UP:
-			LOG(INFO) << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
-				<< ": " << pTcpConnection->getfd()->getPeerPort();
+			//LOG(INFO) << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
+			//	<< ": " << pTcpConnection->getfd()->getPeerPort();
+			{
+				std::ostringstream oss;
+				oss << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
+					<< ": " << pTcpConnection->getfd()->getPeerPort();
+				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+			}
 			handleSignUp(pBuffer);
 			break;
 		case Msg::MSG_TYPE::LOGIN_IN:
-			LOG(INFO) << "LOGIN_IN from" << pTcpConnection->getfd()->getPeerAddr()
-				<< ": " << pTcpConnection->getfd()->getPeerPort();
+			//LOG(INFO) << "LOGIN_IN from" << pTcpConnection->getfd()->getPeerAddr()
+			//	<< ": " << pTcpConnection->getfd()->getPeerPort();
+			{
+			std::ostringstream oss;
+			oss << "LOGIN_IN from" << pTcpConnection->getfd()->getPeerAddr()
+					<< ": " << pTcpConnection->getfd()->getPeerPort();
+			Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+			}
 			handleLoginIn(pBuffer);
 			break;
 		case Msg::MSG_TYPE::SHOW_SB:
@@ -62,8 +75,14 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 			handleToSb(pBuffer, msglen);
 			break;
 		case Msg::MSG_TYPE::GET_FRIENDS:
-			LOG(INFO) << "GET_FRIENDS from" << pTcpConnection->getfd()->getPeerAddr()
-				<< ": " << pTcpConnection->getfd()->getPeerPort() << " " << pTcpConnection->getid();
+			//LOG(INFO) << "GET_FRIENDS from" << pTcpConnection->getfd()->getPeerAddr()
+			//	<< ": " << pTcpConnection->getfd()->getPeerPort() << " " << pTcpConnection->getid();
+			{
+				std::ostringstream oss;
+				oss << "GET_FRIENDS from" << pTcpConnection->getfd()->getPeerAddr()
+						<< ": " << pTcpConnection->getfd()->getPeerPort() << " " << pTcpConnection->getid();
+				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+			}
 			handleGetFriends(pBuffer);
 			break;
 		default:
@@ -109,18 +128,25 @@ void TcpSession::handleSignUp(Buffer *pBuffer)
 	nickname.erase(nickname.begin()+nickname.find_first_of('\0'), nickname.end());
 	uint32_t id;
 	if (UserManager::addUser(ploop,nickname, password,id)) {
+		//Singleton<TcpServer>
+
 		std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 5, Msg::MSG_TYPE::SIGN_UP_ANS));
 		pMsg->writeUint8(SUCCESS);
 		pMsg->writeUint32(id);
-		LOG(INFO) << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
+
+		std::ostringstream oss;
+		oss << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
 			<< ": " << pTcpConnection->getfd()->getPeerPort() << "success." << nickname << ":" << password;
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
 		pTcpConnection->sendMsg(pMsg);
 	}
 	else {
 		std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::SIGN_UP_ANS));
 		pMsg->writeUint8(FAIL);
-		LOG(INFO) << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
+		std::ostringstream oss;
+		oss << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
 			<< ": " << pTcpConnection->getfd()->getPeerPort() << "fail." << nickname << ":" << password;
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
 		pTcpConnection->sendMsg(pMsg);
 	}
 }
@@ -204,7 +230,18 @@ void TcpSession::handleToSb(Buffer *pBuffer,int msglen)
 	pMsg->writeUint32(id);
 	auto content = pBuffer->getString(msglen - Msg::headerLen - 4);
 	UserManager::addChat(ploop,id,targetid,content);
-	LOG(INFO) << "From " << id << " to " << targetid << ":" << content << std::endl;
+	//LOG(INFO) << "From " << id << " to " << targetid << ":" << content << std::endl;
+	/*
+	std::string logstr("From");
+	logstr.append(std::to_string(id));
+	logstr.append(" to ");
+	logstr.append(std::to_string(targetid));
+	logstr.append(":");
+	logstr.append(content);
+	*/
+	std::ostringstream oss;
+	oss << "From " << id << " to " << targetid << ":" << content;
+	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
 	pMsg->writeString(content.c_str(), content.length());
 
 	Singleton<TcpServer>::instance().forwardMsg(targetid, pMsg);

@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include "UserManager.h"
 #include "easylogging++.h"
+#include "Singleton.h"
+#include "LogManager.h"
 
 void TcpServer::init(EventLoop *_ploop,std::string ip, unsigned short port)
 {
@@ -52,8 +54,7 @@ void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
 {
 	{
 		std::unique_lock<std::shared_mutex> lck(mtxUserMap);
-		auto iter = userMap.find(id);
-		if (iter == userMap.end()) {
+		if (userMap.find(id) == userMap.end()) {
 			userMap[id].pSendBuf = std::make_shared<Buffer>(true);
 			userMap[id].pSendBuf->setMsgWritenCallback(std::bind(&TcpServer::forwardNotify, this, id));
 		}
@@ -105,6 +106,7 @@ void TcpServer::loadUserBuffer() {
 		}
 	}
 	else {
-		LOG(ERROR) << "loadUserBuffer failed.";
+		//LOG(ERROR) << "loadUserBuffer failed.";
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::ERROR_LEVEL, "loadUserBuffer failed.");
 	}
 }
