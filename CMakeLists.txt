@@ -20,3 +20,6 @@ target_link_libraries(server -lpthread -lmysqlclient)
 # TcpServer.cpp TcpSession.cpp ThreadManager.cpp Epoller.cpp util.cpp
 # easylogging++.cc DB.cpp Msg.cpp UserManager.cpp md5.cpp)
 #target_link_libraries(client -lpthread -lmysqlclient)
+
+add_executable(redistest redistest.cpp REDIS.cpp ThreadManager.cpp easylogging++.cc)
+target_link_libraries(redistest -lhiredis -lpthread)

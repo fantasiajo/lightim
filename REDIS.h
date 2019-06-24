@@ -1,10 +1,11 @@
 #pragma once
 #include <hiredis/hiredis.h>
 #include <string>
+#include <vector>
 
 class REDIS{
 public:
-    REDIS(std::string host,int port,struct timeval timeout);
+    REDIS(std::string host,int port,int timeout);
     ~REDIS();
 
     REDIS(const REDIS &) = delete;
@@ -12,7 +13,7 @@ public:
     REDIS(REDIS &&) = delete;
     REDIS &operator=(REDIS &&) = delete;
 
-    bool exeCommand(std::string cmd,std::string res);
+    bool exeCommand(const std::string &cmd,std::vector<std::string>& res);
 private:
     redisContext *conn;
     redisReply *reply;
