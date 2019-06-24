@@ -4,6 +4,7 @@
 #include <chrono>
 #include "easylogging++.h"
 #include <thread>
+#include <unistd.h>
 
 class LogManager {
 public:
@@ -43,6 +44,8 @@ public:
 					break;
 				case LOG_TYPE::FATAL_LEVEL:
 					LOG(FATAL) << item.content;
+					sleep(5);
+					exit(1);
 					break;
 				default:
 					break;

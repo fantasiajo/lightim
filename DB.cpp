@@ -11,8 +11,6 @@ DB::DB(std::string host, std::string user, std::string pwd, std::string db_name)
 		std::ostringstream oss;
 		oss << "mysql_init failed:" << mysql_error(conn);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, oss.str());
-		//todo sleep
-		exit(1);
 	}
 	//设置断开时重连
 	my_bool reconnect = 0;
@@ -20,7 +18,6 @@ DB::DB(std::string host, std::string user, std::string pwd, std::string db_name)
 		std::ostringstream oss;
 		oss << "mysql_options failed: " << mysql_error(conn);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, oss.str());
-		exit(1);
 	}
 
 	conn = mysql_real_connect(conn, host.c_str(), user.c_str(), pwd.c_str(),
@@ -30,8 +27,6 @@ DB::DB(std::string host, std::string user, std::string pwd, std::string db_name)
 		std::ostringstream oss;
 		oss << "mysql_real_connect failed: " << mysql_error(conn);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, oss.str());
-		//todo sleep
-		exit(1);
 	}
 }
 
