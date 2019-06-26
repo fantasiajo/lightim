@@ -14,7 +14,7 @@
 TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 	:ploop(_ploop),
 	pconfd(pSocket),
-	pSendBuf(new Buffer(true)),
+	pSendBuf(new Buffer()),
 	pRecvBuf(new Buffer())
 {
 	pIOEM.reset(new IOEventManager(_ploop, pconfd->getSockfd()));
@@ -29,18 +29,8 @@ void TcpConnection::connectionEstablished()
 {
 	pTcpSession.reset(new TcpSession(ploop,this));
 	pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,std::weak_ptr<TcpConnection>(this->shared_from_this())));
-
-	pTcpSession->setConfirmCallback(std::bind(&TcpConnection::confirm,this));
 	setMsgCallBack(std::bind(&TcpSession::handleMsg, pTcpSession.get(), pRecvBuf.get()));
 	pIOEM->enableReading();
-}
-
-void TcpConnection::setSendBuf(std::shared_ptr<Buffer> pB)
-{
-	pSendBuf = pB;
-	if (!pSendBuf->allConfirm()) {
-		pIOEM->enableWriting();
-	}
 }
 
 void TcpConnection::setMsgCallBack(const std::function<void()> &cb)
@@ -77,13 +67,11 @@ void TcpConnection::sendInLoop(std::shared_ptr<Msg> pMsg) {
 	}
 }
 
-void TcpConnection::sendMsg(std::shared_ptr<Msg> pMsg) {
+void TcpConnection::sendMsg(std::shared_ptr<Msg> pMsg,std::weak_ptr<TcpConnection> weakPTcpConn) {
+	if(weakPTcpConn.expired()){//防止因为TcpConnection被销毁后又调用此函数
+		return;
+	}
 	send(pMsg->getBuf(), pMsg->getLen());
-}
-
-void TcpConnection::confirm()
-{
-	pSendBuf->confirm();
 }
 
 TcpConnection::~TcpConnection()

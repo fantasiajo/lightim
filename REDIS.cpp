@@ -49,7 +49,38 @@ bool REDIS::exeCommand(const std::string &cmd, std::vector<std::string> &res){
             }
             break;
     };
+    freeReplyObject(reply);
     return success;
+}
+
+bool REDIS::queuePush(std::string key, char* data, uint16_t len){
+    bool success = true;
+    reply = static_cast<redisReply *>(redisCommand(conn,"rpush u%s %b",key.c_str(),data,len));
+    if(reply->type==REDIS_REPLY_ERROR){
+        Singleton<LogManager>::instance().logInQueue(LogManager::ERROR_LEVEL,reply->str);
+        success = false;
+    }
+    freeReplyObject(reply);
+    return success;
+}
+
+bool REDIS::queuePop(std::string key){
+    bool success = true;
+    reply = static_cast<redisReply *>(redisCommand(conn,"lpop u%s",key.c_str()));
+    if(reply->type==REDIS_REPLY_ERROR){
+        Singleton<LogManager>::instance().logInQueue(LogManager::ERROR_LEVEL,reply->str);
+        success = false;
+    }
+    freeReplyObject(reply);
+    return success;
+}
+
+int REDIS::queueLen(std::string key){
+    int res;
+    reply = static_cast<redisReply *>(redisCommand(conn,"llen u%s",key.c_str()));
+    res = reply->integer;
+    freeReplyObject(reply);
+    return res;
 }
 
 

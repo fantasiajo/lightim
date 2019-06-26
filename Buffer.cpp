@@ -2,17 +2,10 @@
 #include "EventLoop.h"
 #include "Msg.h"
 
-Buffer::Buffer(bool _isSend)
-	:readIndex(0),writeIndex(0),isSend(_isSend)
+Buffer::Buffer()
+	:readIndex(0),writeIndex(0)
 {
 	str.resize(MINSIZE);
-	if (isSend) {
-		confirmIndex = 0;
-	}
-}
-
-bool Buffer::allConfirm() {
-	return confirmIndex == writeIndex;
 }
 
 bool Buffer::empty() {
@@ -44,40 +37,18 @@ void Buffer::out(char *buf, int len) {
 
 void Buffer::recycleSpace()
 {
-	if (isSend) {
-		//sendbuf
-		if (str.size() > MINSIZE && (writeIndex - confirmIndex) * 5 < str.size()) {
-			std::copy(str.begin() + confirmIndex, str.begin() + writeIndex, str.begin());
-			if ((writeIndex-confirmIndex) > MINSIZE) {
-				str.resize(writeIndex - confirmIndex);
-			}
-			else {
-				str.resize(MINSIZE);
-			}
-			str.shrink_to_fit();
-
-			//下面不能调换顺序
-			writeIndex -= confirmIndex;
-			readIndex -= confirmIndex;
-			confirmIndex = 0;
+	if (str.size() > MINSIZE && length() * 5 < str.size()) {
+		std::copy(str.begin() + readIndex, str.begin() + writeIndex, str.begin());
+		if (length() > MINSIZE) {
+			str.resize(length());
 		}
-	}
-	else {
-		//recvbuf
-		if (str.size() > MINSIZE && length() * 5 < str.size()) {
-			std::copy(str.begin() + readIndex, str.begin() + writeIndex, str.begin());
-			if (length() > MINSIZE) {
-				str.resize(length());
-			}
-			else {
-				str.resize(MINSIZE);
-			}
-			str.shrink_to_fit();
-
-			//下面两行不能调换顺序
-			writeIndex -= readIndex;
-			readIndex = 0;
+		else {
+			str.resize(MINSIZE);
 		}
+		str.shrink_to_fit();
+		//下面两行不能调换顺序
+		writeIndex -= readIndex;
+		readIndex = 0;
 	}
 }
 
@@ -131,19 +102,6 @@ int Buffer::writeout(Socket *psocket)//只有sendbuf会调用
 		readIndex += cnt;
 	}
 	return cnt;
-}
-
-void Buffer::reset()
-{
-	if (confirmIndex == readIndex) return;
-	auto len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
-	auto type = *((uint8_t *)(&str[confirmIndex + 2]));
-	while (confirmIndex!=readIndex && type == Msg::MSG_TYPE::CONFIRM) {
-		confirmIndex += len;
-		len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
-		type = *((uint8_t *)(&str[confirmIndex + 2]));
-	}
-	readIndex = confirmIndex;
 }
 
 void Buffer::pushMsg(std::shared_ptr<Msg> pMsg)

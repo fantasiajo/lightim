@@ -14,6 +14,10 @@ public:
     REDIS &operator=(REDIS &&) = delete;
 
     bool exeCommand(const std::string &cmd,std::vector<std::string>& res);
+
+    bool queuePush(std::string key, char* data, uint16_t len);
+    bool queuePop(std::string key);
+    int queueLen(std::string key);
 private:
     redisContext *conn;
     redisReply *reply;

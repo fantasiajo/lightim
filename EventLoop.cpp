@@ -14,7 +14,8 @@ EventLoop::EventLoop()
 	pEpoller(new Epoller()),
 	event_fd(createEventFd()),
 	event_fd_ioem(new IOEventManager(this, event_fd)),
-	pDb(new DB(HOST,USER,PWD,DB_NAME))
+	pDb(new DB(HOST,USER,PWD,DB_NAME)),
+	pMsgCache(new MsgCache("127.0.0.1",6379,1))
 {
 	event_fd_ioem->enableReading();
 	event_fd_ioem->setReadCallBack(std::bind(&EventLoop::readEventFd,this));

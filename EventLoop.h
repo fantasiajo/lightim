@@ -5,6 +5,7 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#include "MsgCache.h"
 
 typedef std::function<void()> Task;
 
@@ -35,6 +36,10 @@ public:
 	DB *getDb() {
 		return pDb.get();
 	}
+
+	std::weak_ptr<MsgCache> getPMsgCache(){
+		return pMsgCache;
+	}
 private:
 
 	//成员变量
@@ -48,6 +53,9 @@ private:
 
 	int event_fd;
 	std::shared_ptr<IOEventManager> event_fd_ioem;
+	
+	std::shared_ptr<MsgCache> pMsgCache;
+
 	void readEventFd();
 	void writeEventFd();
 

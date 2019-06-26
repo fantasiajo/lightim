@@ -16,7 +16,6 @@ class Msg;
 class TcpServer {
 public:
 	typedef struct {
-		std::shared_ptr<Buffer> pSendBuf;
 		std::weak_ptr<TcpConnection> tmpPTcpConn;
 	}UserInfo;
 
@@ -45,6 +44,8 @@ public:
 		if (userMap.find(id) == userMap.end()) return false;
 		return !userMap[id].tmpPTcpConn.expired();
 	}
+
+	std::weak_ptr<TcpConnection> getConnById(uint32_t id);
 
 private:
 	EventLoop *ploop;

@@ -105,3 +105,8 @@ void TcpServer::loadUserBuffer() {
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::ERROR_LEVEL, "loadUserBuffer failed.");
 	}
 }
+
+std::weak_ptr<TcpConnection> TcpServer::getConnById(uint32_t id){
+	std::shared_lock<std::shared_mutex> lck(mtxUserMap);
+	return userMap[id].tmpPTcpConn;
+}

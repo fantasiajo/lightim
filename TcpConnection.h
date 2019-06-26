@@ -37,17 +37,13 @@ public:
 
 	void connectionEstablished();
 
-	void setSendBuf(std::shared_ptr<Buffer> pB);
-
 	void setMsgCallBack(const std::function<void()>&);
 	void setCloseCallBack(const std::function<void()> &);
 
 	void sendInLoop(const char *buf, int len);
 	void send(const char*buf, int len);
 	void sendInLoop(std::shared_ptr<Msg> pMsg);
-	void sendMsg(std::shared_ptr<Msg> pMsg);
-
-	void confirm();
+	void sendMsg(std::shared_ptr<Msg> pMsg, std::weak_ptr<TcpConnection> weakPTcpConn);
 
 	std::shared_ptr<IOEventManager> getPIOEM() {
 		return pIOEM;

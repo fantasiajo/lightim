@@ -10,15 +10,13 @@ class Msg;
 
 class Buffer {
 public:
-	Buffer(bool isSend = false);
+	Buffer();
 	~Buffer(){}
 
 	Buffer(const Buffer &) = delete;
 	Buffer &operator=(const Buffer &) = delete;
 	Buffer(Buffer &&) = delete;
 	Buffer &operator=(Buffer &&) = delete;
-
-	bool allConfirm();
 
 	bool empty();
 	int length();
@@ -47,12 +45,8 @@ public:
 		return ploop;
 	}
 
-	void reset();
-
 	void pushMsg(std::shared_ptr<Msg> pMsg);
 	void pushMsgInLoop(std::shared_ptr<Msg> pMsg);
-
-	void confirm();
 
 	void setMsgWritenCallback(const std::function<void()> &cb);
 
@@ -63,9 +57,6 @@ private:
 	const int MINSIZE = 512;
 	int readIndex;
 	int writeIndex;
-	int confirmIndex;
-
-	bool isSend;
 
 	std::function<void()> msgWritenCallback;
 };

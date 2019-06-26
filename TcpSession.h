@@ -3,6 +3,7 @@
 #include "Buffer.h"
 #include <functional>
 #include <memory>
+#include "MsgCache.h"
 
 class TcpConnection;
 class EventLoop;
@@ -30,6 +31,13 @@ private:
 
 	TcpConnection *pTcpConnection;
 
+	std::function<void(uint32_t)> loginCallback;
+	std::function<void()> confirmCallback;
+
+	int heartBeatcnt = 0;
+
+	std::weak_ptr<MsgCache> weakPMsgCache;
+
 	void handleConfirm(Buffer *pBuffer);
 	void handleSignUp(Buffer *pBuffer);//|nickname 32 bytes|md5passwd 32 bytes|
 	void handleLoginIn(Buffer *pBuffer);
@@ -41,8 +49,5 @@ private:
 	void handleGetFriends(Buffer *pBuffer);
 	void handleHeartBeat();
 
-	std::function<void(uint32_t)> loginCallback;
-	std::function<void()> confirmCallback;
-
-	int heartBeatcnt = 0;
+	void sendMsg(uint32_t targetid,bool addInCache, std::shared_ptr<Msg> pMsg);
 };
