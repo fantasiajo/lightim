@@ -4,10 +4,10 @@
 #include <vector>
 #include <unordered_map>
 
-#define HOST "localhost"
-#define USER "root"
-#define PWD ""
-#define DB_NAME "lightim"
+#define MYSQL_HOST "localhost"
+#define MYSQL_USER "root"
+#define MYSQL_PWD ""
+#define MYSQL_DB_NAME "lightim"
 
 class QUERY_RESULT {
 public:
@@ -30,7 +30,7 @@ public:
 
 class DB {
 public:
-	DB(std::string host, std::string user, std::string pwd, std::string db_name);
+	DB(std::string host = MYSQL_HOST, std::string user = MYSQL_USER, std::string pwd = MYSQL_PWD, std::string db_name = MYSQL_DB_NAME);
 	~DB();
 
 	DB(const DB &) = delete;

@@ -4,9 +4,13 @@
 #include <string>
 #include <vector>
 
+#define REDIS_HOST "127.0.0.1"
+#define REDIS_PORT 6379
+#define REDIS_TIMEOUT 1
+
 class REDIS{
 public:
-    REDIS(std::string host,int port,int timeout);
+    REDIS(std::string host = REDIS_HOST, int port = REDIS_PORT, int timeout = REDIS_TIMEOUT);
     ~REDIS();
 
     REDIS(const REDIS &) = delete;
