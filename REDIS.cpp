@@ -83,6 +83,26 @@ int REDIS::queueLen(std::string key){
     return res;
 }
 
+bool REDIS::queueContent(std::string key, std::vector<std::string> &strs){
+    strs.clear();
+    bool success = true;
+    reply = static_cast<redisReply *>(redisCommand(conn,"lrange u%s 0 -1",key.c_str()));
+    if(reply->type==REDIS_REPLY_ARRAY){
+        strs.reserve(reply->elements);
+        for(int i=0;i<reply->elements;++i){
+            strs.emplace_back(reply->element[i]->str,reply->element[i]->len);
+        }
+    }
+    else{
+        success = false;
+        Singleton<LogManager>::instance().logInQueue(LogManager::ERROR_LEVEL,reply->str);
+    }
+    freeReplyObject(reply);
+    return success;
+}
+
+
+
 
 
 

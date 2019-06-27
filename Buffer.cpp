@@ -120,18 +120,6 @@ void Buffer::pushMsgInLoop(std::shared_ptr<Msg> pMsg)
 	}
 }
 
-void Buffer::confirm() {
-	auto len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
-	auto type = *(uint8_t *)(&str[confirmIndex + 2]);
-	while (type == Msg::MSG_TYPE::CONFIRM) {
-		confirmIndex += len;
-		len = ::ntohs(*((uint16_t *)(&str[confirmIndex])));
-		type = *(uint8_t *)(&str[confirmIndex + 2]);
-	}
-	confirmIndex += len;
-	recycleSpace();
-}
-
 void Buffer::setMsgWritenCallback(const std::function<void()>& cb)
 {
 	msgWritenCallback = cb;

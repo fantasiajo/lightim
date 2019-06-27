@@ -114,11 +114,13 @@ void TcpSession::handleConfirm(Buffer * pBuffer)
 		case Msg::MSG_TYPE::LOGIN_IN_ANS:
 			if(login){
 				loginCallback(id);
+				loadCache(id);
 			}
 			break;
 		case Msg::MSG_TYPE::CONFIRM:
 		case Msg::MSG_TYPE::HEART_BEAT:
 		case Msg::MSG_TYPE::SIGN_UP_ANS:
+		case Msg::MSG_TYPE::GET_FRIENDS_ANS:
 			break;
 		default:
 			weakPMsgCache.lock()->pop(id);
@@ -304,5 +306,14 @@ void TcpSession::sendMsg(uint32_t targetid,bool addInCache, std::shared_ptr<Msg>
 		else{
 			pTcpConn->getloop()->queueInLoop(std::bind(&TcpConnection::sendMsg,pTcpConn.get(),pMsg,std::weak_ptr<TcpConnection>(pTcpConn)));
 		}
+	}
+}
+
+void TcpSession::loadCache(uint32_t id){
+	//从uid中获取缓存并加入buffer中
+	std::vector<std::string> msgs;
+	weakPMsgCache.lock()->content(id,msgs);
+	for(const auto &msg:msgs){
+		pTcpConnection->send(msg.c_str(),msg.length());
 	}
 }

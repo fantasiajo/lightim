@@ -20,3 +20,7 @@ bool MsgCache::pop(uint32_t id){
 int MsgCache::size(uint32_t id){
     return r.queueLen(std::to_string(id));
 }
+
+bool MsgCache::content(uint32_t id, std::vector<std::string> &msgs){
+    return r.queueContent(std::to_string(id),msgs);
+}

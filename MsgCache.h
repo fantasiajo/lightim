@@ -1,3 +1,5 @@
+#pragma once
+
 #include "REDIS.h"
 #include "Msg.h"
 #include <memory>
@@ -19,6 +21,7 @@ public:
     bool push(uint32_t id, std::shared_ptr<Msg> pMsg);
     bool pop(uint32_t id);
     int size(uint32_t id);
+    bool content(uint32_t id, std::vector<std::string> &msgs);
 private:
     REDIS r;
 };

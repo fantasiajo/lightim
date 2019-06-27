@@ -1,4 +1,5 @@
 #pragma once
+
 #include <hiredis/hiredis.h>
 #include <string>
 #include <vector>
@@ -18,6 +19,7 @@ public:
     bool queuePush(std::string key, char* data, uint16_t len);
     bool queuePop(std::string key);
     int queueLen(std::string key);
+    bool queueContent(std::string key,std::vector<std::string> &strs);
 private:
     redisContext *conn;
     redisReply *reply;

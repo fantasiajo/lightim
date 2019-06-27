@@ -50,4 +50,5 @@ private:
 	void handleHeartBeat();
 
 	void sendMsg(uint32_t targetid,bool addInCache, std::shared_ptr<Msg> pMsg);
+	void loadCache(uint32_t id);
 };

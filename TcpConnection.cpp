@@ -58,15 +58,6 @@ void TcpConnection::send(const char * buf, int len)
 	pIOEM->enableWriting();
 }
 
-void TcpConnection::sendInLoop(std::shared_ptr<Msg> pMsg) {
-	if (ploop->isInLoopThread()) {
-		sendMsg(pMsg);
-	}
-	else {
-		ploop->queueInLoop(std::bind(&TcpConnection::sendMsg, this, pMsg));
-	}
-}
-
 void TcpConnection::sendMsg(std::shared_ptr<Msg> pMsg,std::weak_ptr<TcpConnection> weakPTcpConn) {
 	if(weakPTcpConn.expired()){//防止因为TcpConnection被销毁后又调用此函数
 		return;
@@ -125,6 +116,6 @@ void TcpConnection::handleClose()
 	pconfd->close();
 	std::ostringstream oss;
 	oss << pconfd->getPeerAddr() + ":" << pconfd->getPeerPort() << " leaves.";
-	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::ERROR_LEVEL, oss.str());
+	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
 	closeCallBack();
 }
