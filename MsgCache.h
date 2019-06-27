@@ -10,7 +10,7 @@
 
 class MsgCache{
 public:
-    MsgCache(std::string host, int port, int timeout);
+    MsgCache();
     ~MsgCache();
 
     MsgCache(const MsgCache &) = delete;

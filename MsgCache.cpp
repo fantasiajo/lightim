@@ -1,7 +1,6 @@
 #include "MsgCache.h"
 
-MsgCache::MsgCache(std::string host, int port, int timeout)
-    :r(host,port,timeout){
+MsgCache::MsgCache(){
 
 }
 
