@@ -109,10 +109,10 @@ bool REDIS::queueContent(std::string key, std::vector<std::string> &strs){
     	freeReplyObject(reply);
 
     	reply = static_cast<redisReply *>(redisCommand(conn,"del u%s",key.c_str()));
-	if(reply->type==REDIS_REPLY_ERROR){
+	    if(reply->type==REDIS_REPLY_ERROR){
        		Singleton<LogManager>::instance().logInQueue(LogManager::ERROR_LEVEL,reply->str);
-	}
-	freeReplyObject(reply);
+	    }
+	    freeReplyObject(reply);
     }
     else{
         success = false;

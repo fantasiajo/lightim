@@ -122,7 +122,7 @@ void TcpSession::handleSignUp(Buffer *pBuffer)
 	//回复确认收到包
 	std::shared_ptr<Msg> pConMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::CONFIRM));
 	pConMsg->writeUint8(Msg::MSG_TYPE::SIGN_UP);
-	pTcpConnection->sendMsg(pConMsg);
+	pTcpConnection->sendMsg(pConMsg,pTcpConnection->shared_from_this());
 
 	//处理注册逻辑,因为主键是id是自增的，所以几乎任何注册都会成功。
 	std::string nickname = pBuffer->getString(32);
@@ -192,7 +192,7 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 			std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 2, Msg::MSG_TYPE::LOGIN_IN_ANS));
 			pMsg->writeUint8(FAIL);
 			pMsg->writeUint8(LOGINED);
-			pTcpConnection->sendMsg(pMsg);
+			pTcpConnection->sendMsg(pMsg,pTcpConnection->shared_from_this());
 		}
 		else {//当前未登录
 			std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::LOGIN_IN_ANS));
@@ -212,7 +212,7 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 		std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 2, Msg::MSG_TYPE::LOGIN_IN_ANS));
 		pMsg->writeUint8(FAIL);
 		pMsg->writeUint8(USERORPWDNOTCORR);
-		pTcpConnection->sendMsg(pMsg);
+		pTcpConnection->sendMsg(pMsg,pTcpConnection->shared_from_this());
 	}
 }
 
@@ -301,7 +301,7 @@ void TcpSession::handleGetFriends(Buffer * pBuffer)
 	// 回复确认收到包
 	std::shared_ptr<Msg> pConMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::CONFIRM));
 	pConMsg->writeUint8(Msg::MSG_TYPE::GET_FRIENDS);
-	pTcpConnection->sendMsg(pConMsg);
+	pTcpConnection->sendMsg(pConMsg,pTcpConnection->shared_from_this());
 
 	//auto id = pBuffer->getUint32();
 	std::vector<std::pair<uint32_t, std::string>> idname;
@@ -313,7 +313,7 @@ void TcpSession::handleGetFriends(Buffer * pBuffer)
 		idname[i].second.resize(32);
 		pMsg->writeString(idname[i].second.c_str(), idname[i].second.length());
 	}
-	pTcpConnection->sendMsg(pMsg);
+	pTcpConnection->sendMsg(pMsg,pTcpConnection->shared_from_this());
 }
 
 void TcpSession::handleHeartBeat()
@@ -323,7 +323,23 @@ void TcpSession::handleHeartBeat()
 	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
 	std::shared_ptr<Msg> pConMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::CONFIRM));
 	pConMsg->writeUint8(Msg::MSG_TYPE::HEART_BEAT);
-	pTcpConnection->sendMsg(pConMsg);
+	pTcpConnection->sendMsg(pConMsg,pTcpConnection->shared_from_this());
+}
+
+void TcpSession::sendMsg(uint32_t targetid,bool addInCache, std::shared_ptr<Msg> pMsg){
+	//将消息加入缓存??有些消息需要加，有些消息不需要加，与客户端登录注册之类的不用加入
+	if(addInCache){
+		ploop->getPMsgCache().lock()->push(targetid,pMsg);
+	}
+	std::shared_ptr<TcpConnection> pTcpConn=Singleton<TcpServer>::instance().getConnById(targetid).lock();
+	if(pTcpConn){
+		if(pTcpConn->getloop()->isInLoopThread()){
+			pTcpConn->sendMsg(pMsg,pTcpConn);
+		}
+		else{
+			pTcpConn->getloop()->queueInLoop(std::bind(&TcpConnection::sendMsg,pTcpConn.get(),pMsg,std::weak_ptr<TcpConnection>(pTcpConn)));
+		}
+	}
 }
 
 // void TcpSession::sendMsg(uint32_t targetid,bool addInCache, std::shared_ptr<Msg> pMsg){

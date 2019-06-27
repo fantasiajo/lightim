@@ -83,7 +83,6 @@ private:
 
 	int event_fd;
 	std::shared_ptr<IOEventManager> event_fd_ioem;
-
 	std::shared_ptr<MsgCache> pMsgCache;
 
 	void readEventFd();

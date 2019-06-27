@@ -5,7 +5,6 @@
 #include <memory>
 
 
-
 class MsgCache{
 public:
     MsgCache();

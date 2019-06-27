@@ -52,6 +52,8 @@ public:
 	void agreeFriend(uint32_t fromid, uint32_t toid, const Task &confirmCallback);
 	void chat(uint32_t fromid, uint32_t toid, std::string content, const Task &confirmCallback);
 
+	std::weak_ptr<TcpConnection> getConnById(uint32_t id);
+
 private:
 	EventLoop *ploop;
 
