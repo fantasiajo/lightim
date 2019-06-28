@@ -2,7 +2,7 @@
 #include "TcpConnection.h"
 #include "EventLoop.h"
 #include "Msg.h"
-#include "UserManager.h"
+#include "DataManager.h"
 #include "easylogging++.h"
 #include "Singleton.h"
 #include "TcpServer.h"
@@ -140,7 +140,7 @@ void TcpSession::handleSignUp(Buffer *pBuffer)
 	std::string password = pBuffer->getString(32);
 	nickname.erase(nickname.begin()+nickname.find_first_of('\0'), nickname.end());
 	uint32_t id;
-	if (UserManager::addUser(ploop,nickname, password,id)) {
+	if (DataManager::addUser(ploop,nickname, password,id)) {
 		//Singleton<TcpServer>
 
 		std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 5, Msg::MSG_TYPE::SIGN_UP_ANS));
@@ -173,7 +173,7 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 
 	id = pBuffer->getUint32();
 	std::string pwd = pBuffer->getString(32);
-	if (UserManager::exists(ploop,id, pwd)) {//存在该用户
+	if (DataManager::exists(ploop,id, pwd)) {//存在该用户
 		if (Singleton<TcpServer>::instance().isOnLine(id)) {//当前已登录
 			std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 2, Msg::MSG_TYPE::LOGIN_IN_ANS));
 			pMsg->writeUint8(FAIL);
@@ -221,7 +221,7 @@ void TcpSession::handleAgreeSb(Buffer * pBuffer)
 	pTcpConnection->sendMsg(pConMsg,pTcpConnection->shared_from_this());
 	//逻辑有些问题，可能没有插入成功，但同意方已更新好友列表
 	auto agreeid = pBuffer->getUint32();
-	if (UserManager::addFriend(ploop,id,agreeid) && UserManager::addFriend(ploop, agreeid, id)) {
+	if (DataManager::addFriend(ploop,id,agreeid) && DataManager::addFriend(ploop, agreeid, id)) {
 		std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 4, Msg::MSG_TYPE::AGREE_FROM_SB));
 		pMsg->writeUint32(id);
 		sendMsg(agreeid,true,pMsg);
@@ -243,7 +243,7 @@ void TcpSession::handleToSb(Buffer *pBuffer,int msglen)
 	pMsg->writeUint32(id);
 	auto content = pBuffer->getString(msglen - Msg::headerLen - 4);
 	//将消息加入数据库
-	UserManager::addChat(ploop,id,targetid,content);
+	DataManager::addChat(ploop,id,targetid,content);
 	//LOG(INFO) << "From " << id << " to " << targetid << ":" << content << std::endl;
 	/*
 	std::string logstr("From");
@@ -272,7 +272,7 @@ void TcpSession::handleGetFriends(Buffer * pBuffer)
 
 	//auto id = pBuffer->getUint32();
 	std::vector<std::pair<uint32_t, std::string>> idname;
-	UserManager::getFriends(ploop, id, idname);
+	DataManager::getFriends(ploop, id, idname);
 
 	std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + idname.size()*(4 + 32),Msg::MSG_TYPE::GET_FRIENDS_ANS));
 	for (int i = 0; i < idname.size(); ++i) {

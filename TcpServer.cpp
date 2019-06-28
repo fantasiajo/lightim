@@ -9,7 +9,7 @@
 #include <iostream>
 #include "Buffer.h"
 #include <unordered_set>
-#include "UserManager.h"
+#include "DataManager.h"
 #include "easylogging++.h"
 #include "Singleton.h"
 #include "LogManager.h"

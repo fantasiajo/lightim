@@ -4,14 +4,14 @@
 
 class EventLoop;
 
-class UserManager {
+class DataManager {
 public:
-	UserManager(EventLoop *_ploop);
+	DataManager(EventLoop *_ploop);
 
-	UserManager(const UserManager &) = delete;
-	UserManager &operator=(const UserManager &) = delete;
-	UserManager(UserManager &&) = delete;
-	UserManager &operator=(UserManager &&) = delete;
+	DataManager(const DataManager &) = delete;
+	DataManager &operator=(const DataManager &) = delete;
+	DataManager(DataManager &&) = delete;
+	DataManager &operator=(DataManager &&) = delete;
 
 	static bool exists(EventLoop *ploop, uint32_t id,std::string pwd);
 	static bool addUser(EventLoop *ploop, std::string nickname, std::string password,uint32_t &id);

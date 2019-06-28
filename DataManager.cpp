@@ -1,14 +1,14 @@
-#include "UserManager.h"
+#include "DataManager.h"
 #include "DB.h"
 #include "EventLoop.h"
 #include <string>
 
-UserManager::UserManager(EventLoop * _ploop)
+DataManager::DataManager(EventLoop * _ploop)
 	:ploop(_ploop)
 {
 }
 
-//bool UserManager::exists(std::string nickname)
+//bool DataManager::exists(std::string nickname)
 //{
 //	if (ploop->getDb()->exeSQL(std::string("select nickname from user where nickname='")+nickname+"'", res)) {
 //		return res.size() != 0;
@@ -19,7 +19,7 @@ UserManager::UserManager(EventLoop * _ploop)
 //	return false;
 //}
 
-bool UserManager::exists(EventLoop * ploop, uint32_t id, std::string pwd)
+bool DataManager::exists(EventLoop * ploop, uint32_t id, std::string pwd)
 {
 	QUERY_RESULT res;
 	ploop->getDb()->exeSQL(
@@ -29,7 +29,7 @@ bool UserManager::exists(EventLoop * ploop, uint32_t id, std::string pwd)
 	return !res.dataMatrix.empty();
 }
 
-bool UserManager::addUser(EventLoop *ploop,std::string nickname, std::string password,uint32_t &id)
+bool DataManager::addUser(EventLoop *ploop,std::string nickname, std::string password,uint32_t &id)
 {
 	QUERY_RESULT res;
 
@@ -48,7 +48,7 @@ bool UserManager::addUser(EventLoop *ploop,std::string nickname, std::string pas
 	return true;
 }
 
-bool UserManager::addChat(EventLoop * ploop, int fromid, int toid, std::string content)
+bool DataManager::addChat(EventLoop * ploop, int fromid, int toid, std::string content)
 {
 	QUERY_RESULT res;
 	return ploop->getDb()->exeSQL(
@@ -58,7 +58,7 @@ bool UserManager::addChat(EventLoop * ploop, int fromid, int toid, std::string c
 	);
 }
 
-bool UserManager::addFriend(EventLoop * ploop,uint32_t id1, uint32_t id2) {
+bool DataManager::addFriend(EventLoop * ploop,uint32_t id1, uint32_t id2) {
 	QUERY_RESULT res;
 	return ploop->getDb()->exeSQL(
 		std::string("insert into friends(id1,id2) values ('")+std::to_string(id1)+"','"+
@@ -67,7 +67,7 @@ bool UserManager::addFriend(EventLoop * ploop,uint32_t id1, uint32_t id2) {
 	);
 }
 
-bool UserManager::getFriends(EventLoop * ploop, uint32_t id, std::vector<std::pair<uint32_t, std::string>>& idname)
+bool DataManager::getFriends(EventLoop * ploop, uint32_t id, std::vector<std::pair<uint32_t, std::string>>& idname)
 {
 	QUERY_RESULT res;
 	if (ploop->getDb()->exeSQL(
@@ -84,7 +84,7 @@ bool UserManager::getFriends(EventLoop * ploop, uint32_t id, std::vector<std::pa
 	}
 	return false;
 }
-bool UserManager::getAllUsers(EventLoop *ploop, std::vector<uint32_t> &ids) {
+bool DataManager::getAllUsers(EventLoop *ploop, std::vector<uint32_t> &ids) {
 	QUERY_RESULT res;
 	std::string sql("select user_id from user");
 	if (ploop->getDb()->exeSQL(sql, res)) {
