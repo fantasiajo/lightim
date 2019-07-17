@@ -19,6 +19,7 @@ public:
 
 	void newEventLoopThread(int num);
 	EventLoop *getNextEventLoop();
+	EventLoop *getEventLoopById(uint32_t id);
 
 private:
 	std::vector<std::shared_ptr<EventLoop>> ploops;

@@ -20,9 +20,14 @@ public:
 
     bool exeCommand(const std::string &cmd,std::vector<std::string>& res);
 
+    /*
+     *  head                   tail
+     *  pop(lpop)<-~~~~~~~~~~~<-push(rpush)
+     */
     bool queuePush(std::string key, char* data, uint16_t len);
     bool queuePop(std::string key);
     int queueLen(std::string key);
+    bool queuePeekHead(std::string key, std::string &str);
     bool queueContent(std::string key,std::vector<std::string> &strs);
 private:
     redisContext *conn;

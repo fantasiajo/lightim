@@ -4,9 +4,7 @@
 #include "Msg.h"
 #include <memory>
 
-/* 
- *pop(lpop)<-~~~~~~~~~~~<-push(rpush)
- */
+
 
 class MsgCache{
 public:
@@ -18,6 +16,7 @@ public:
     MsgCache& operator=(const MsgCache &) = delete;
     MsgCache& operator=(MsgCache &&) = delete;
 
+    bool peekMsgid(uint32_t id, uint64_t &msgid);
     bool push(uint32_t id, std::shared_ptr<Msg> pMsg);
     bool pop(uint32_t id);
     int size(uint32_t id);

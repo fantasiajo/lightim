@@ -1,5 +1,6 @@
 #pragma once
 #include "Buffer.h"
+#include <unordered_map>
 
 #define FAIL 0
 #define SUCCESS 1
@@ -36,7 +37,7 @@ public:
 		TO_SB,//								d
 		//|targetid 4 bytes|content len - 3 - 4 bytes|
 		FROM_SB,//								e
-		//|targetid 4 bytes|content len - 3 - 4 bytes|
+		//|fromid 4 bytes|msgid 8 bytes|content len - 3 - 4 - 8bytes|
 		GET_FRIENDS,//							f
 		//||
 		GET_FRIENDS_ANS,//						10
@@ -44,6 +45,7 @@ public:
 		HEART_BEAT//							11
 	};
 
+	Msg(const std::string&);
 	Msg(uint16_t _len, MSG_TYPE _type);
 	~Msg();
 
@@ -62,9 +64,13 @@ public:
 	void writeUint8(uint8_t n);
 	void writeUint16(uint16_t n);
 	void writeUint32(uint32_t n);
+	void writeUint64(uint64_t n);
+	void writeUint64(uint64_t n,uint16_t start);
 	void writeString(const char* str, int len);
 
 	const static uint16_t headerLen = 3;
+
+	const static std::unordered_map<MSG_TYPE,std::string> typeMetaData;
 private:
 	MSG_TYPE type;
 	uint16_t len;

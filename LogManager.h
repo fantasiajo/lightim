@@ -8,7 +8,7 @@
 
 class LogManager {
 public:
-	enum LOG_TYPE{INFO_LEVEL,ERROR_LEVEL,FATAL_LEVEL};
+	enum LOG_TYPE{INFO_LEVEL,ERROR_LEVEL,FATAL_LEVEL,DEBUG_LEVEL};
 	typedef struct {
 		LOG_TYPE type;
 		std::string content;
@@ -41,6 +41,9 @@ public:
 					break;
 				case LOG_TYPE::ERROR_LEVEL:
 					LOG(ERROR) << item.content;
+					break;
+				case LOG_TYPE::DEBUG_LEVEL:
+					LOG(DEBUG) << item.content;
 					break;
 				case LOG_TYPE::FATAL_LEVEL:
 					LOG(FATAL) << item.content;

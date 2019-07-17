@@ -23,6 +23,10 @@ EventLoopThreadManager::getNextEventLoop() {
 	return ploops[next++].get();
 }
 
+EventLoop* EventLoopThreadManager::getEventLoopById(uint32_t id){
+	return ploops[id%ploops.size()].get();
+}
+
 void EventLoopThreadManager::threadFun() {
 	EventLoop *ploop = nullptr;
 	{

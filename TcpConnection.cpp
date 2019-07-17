@@ -25,10 +25,11 @@ TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 	pIOEM->setWriteCallBack(std::bind(&TcpConnection::handleWrite, this));
 }
 
-void TcpConnection::connectionEstablished()
+void TcpConnection::connectionEstablished(std::shared_ptr<TcpConnection> pTcpConn)
 {
+	ploop->addTcpConn(pTcpConn);
 	pTcpSession.reset(new TcpSession(ploop,this));
-	pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,std::weak_ptr<TcpConnection>(this->shared_from_this())));
+	//pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,std::weak_ptr<TcpConnection>(this->shared_from_this())));
 	setMsgCallBack(std::bind(&TcpSession::handleMsg, pTcpSession.get(), pRecvBuf.get()));
 	pIOEM->enableReading();
 }
@@ -58,8 +59,12 @@ void TcpConnection::send(const char * buf, int len)
 	pIOEM->enableWriting();
 }
 
-void TcpConnection::sendMsg(std::shared_ptr<Msg> pMsg,std::weak_ptr<TcpConnection> weakPTcpConn) {
-	if(weakPTcpConn.expired()){//防止因为TcpConnection被销毁后又调用此函数
+void TcpConnection::sendMsg(std::shared_ptr<Msg> pMsg) {
+	send(pMsg->getBuf(), pMsg->getLen());
+}
+
+void TcpConnection::sendMsgWithCheck(std::shared_ptr<Msg> pMsg,std::weak_ptr<TcpConnection> weakptr) {
+	if(weakptr.expired()){
 		return;
 	}
 	send(pMsg->getBuf(), pMsg->getLen());

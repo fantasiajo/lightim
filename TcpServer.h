@@ -5,7 +5,10 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <shared_mutex>
+#include "Singleton.h"
+#include "util.h"
 
+class EventLoopManager;
 class EventLoop;
 class TcpConnection;
 class Acceptor;
@@ -15,9 +18,9 @@ class Msg;
 
 class TcpServer {
 public:
-	typedef struct {
-		std::weak_ptr<TcpConnection> tmpPTcpConn;
-	}UserInfo;
+	// typedef struct {
+	// 	std::weak_ptr<TcpConnection> tmpPTcpConn;
+	// }UserInfo;
 
 	TcpServer(){}
 	~TcpServer(){}
@@ -39,21 +42,23 @@ public:
 
 	void forwardNotify(uint32_t id);
 
-	bool isOnLine(uint32_t id) {
-		std::shared_lock<std::shared_mutex> lck(mtxUserMap);
-		if (userMap.find(id) == userMap.end()) return false;
-		return !userMap[id].tmpPTcpConn.expired();
-	}
+	// bool isOnLine(uint32_t id) {
+	// 	std::shared_lock<std::shared_mutex> lck(mtxUserMap);
+	// 	if (userMap.find(id) == userMap.end()) return false;
+	// 	return !userMap[id].tmpPTcpConn.expired();
+	// }
 
-	std::weak_ptr<TcpConnection> getConnById(uint32_t id);
+	void addFriend(uint32_t fromid, uint32_t toid, const Task &confirmCallback);
+	void agreeFriend(uint32_t fromid, uint32_t toid, const Task &confirmCallback);
+	void chat(uint32_t fromid, uint32_t toid, std::string content, const Task &confirmCallback);
 
 private:
 	EventLoop *ploop;
 
 	std::shared_ptr<Acceptor> pAcceptor;
-	std::unordered_set<std::shared_ptr<TcpConnection>> tcpConnSet;
-	std::unordered_map<uint32_t, UserInfo> userMap;//用户id-（发送buffer，负责的连接）
-	std::shared_mutex mtxUserMap;
+	//std::unordered_set<std::shared_ptr<TcpConnection>> tcpConnSet;
+	//std::unordered_map<uint32_t, UserInfo> userMap;//用户id-（发送buffer，负责的连接）
+	//std::shared_mutex mtxUserMap;
 
 	void loadUserBuffer();
 };

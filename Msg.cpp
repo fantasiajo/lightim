@@ -3,6 +3,22 @@
 #include <cstring>
 #include "Singleton.h"
 #include "LogManager.h"
+#include "util.h"
+
+const std::unordered_map<Msg::MSG_TYPE,std::string> Msg::typeMetaData{
+		{MSG_TYPE::ADD_SB,"ADD FRIEND"}
+	};
+
+Msg::Msg(const std::string &content)
+	:len(content.length()),
+	curr(0)
+{
+	buf = (char *)malloc(len);
+	if (!buf) {
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "malloc failed.");
+	}
+	writeString(content.c_str(),content.length());
+}
 
 Msg::Msg(uint16_t _len, MSG_TYPE _type)
 	:type(_type),
@@ -12,10 +28,7 @@ Msg::Msg(uint16_t _len, MSG_TYPE _type)
 {
 	buf = (char *)malloc(len);
 	if (!buf) {
-		//LOG(FATAL) << "malloc failed";
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "malloc failed.");
-		//todo sleep
-		exit(1);
 	}
 	writeUint16(len);
 	writeUint8(type);
@@ -44,6 +57,15 @@ void Msg::writeUint32(uint32_t n)
 {
 	*((uint32_t *)(buf + curr)) = ::htonl(n);
 	curr += 4;
+}
+
+void Msg::writeUint64(uint64_t n){
+	*((uint64_t *)(buf + curr)) = ::htonll(n);
+	curr += 8;
+}
+
+void Msg::writeUint64(uint64_t n, uint16_t start){
+	*((uint64_t *)(buf + start)) = ::htonll(n);
 }
 
 void Msg::writeString(const char * str, int len)

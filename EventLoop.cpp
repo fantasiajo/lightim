@@ -8,13 +8,14 @@
 #include <cerrno>
 #include "LogManager.h"
 #include "Singleton.h"
+#include "DataManager.h"
 
 EventLoop::EventLoop()
 	:tid(std::this_thread::get_id()),
 	pEpoller(new Epoller()),
 	event_fd(createEventFd()),
 	event_fd_ioem(new IOEventManager(this, event_fd)),
-	pDb(new DB()),
+	pDM(new DataManager(this)),
 	pMsgCache(new MsgCache())
 {
 	event_fd_ioem->enableReading();
@@ -122,4 +123,13 @@ void EventLoop::do_pending_task() {
 	for (const auto &task : tmptasks) {
 		task();
 	}
+}
+
+void EventLoop::addTcpConn(std::shared_ptr<TcpConnection> pTcpConn){
+	pTcpConns.insert(pTcpConn);
+}
+
+std::shared_ptr<TcpConnection> EventLoop::pullTcpConn(std::shared_ptr<TcpConnection> pTcpConn){
+	pTcpConns.erase(pTcpConn);
+	return pTcpConn;
 }

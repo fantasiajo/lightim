@@ -28,6 +28,7 @@ private:
 
 	bool login;
 	uint32_t id;
+	uint64_t lastmsgid;
 
 	TcpConnection *pTcpConnection;
 
@@ -43,6 +44,7 @@ private:
 	void handleLoginIn(Buffer *pBuffer);
 	void handleShowSb();
 	void handleAddSb(Buffer *pBuffer);
+	void addFromSb(uint32_t id);
 	void handleAgreeSb(Buffer *pBuffer);
 	void handleDeleteSb();
 	void handleToSb(Buffer *pBuffer,int len);

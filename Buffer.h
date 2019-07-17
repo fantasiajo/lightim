@@ -27,6 +27,7 @@ public:
 	void recycleSpace();
 
 	uint16_t peekUint16();
+	uint32_t peekUint32();
 	
 	uint8_t getUint8();
 	uint16_t getUint16();

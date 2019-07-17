@@ -35,7 +35,7 @@ public:
 		id = _id;
 	}
 
-	void connectionEstablished();
+	void connectionEstablished(std::shared_ptr<TcpConnection>);
 
 	void setMsgCallBack(const std::function<void()>&);
 	void setCloseCallBack(const std::function<void()> &);
@@ -43,10 +43,15 @@ public:
 	void sendInLoop(const char *buf, int len);
 	void send(const char*buf, int len);
 	void sendInLoop(std::shared_ptr<Msg> pMsg);
-	void sendMsg(std::shared_ptr<Msg> pMsg, std::weak_ptr<TcpConnection> weakPTcpConn);
+	void sendMsg(std::shared_ptr<Msg> pMsg);
+	void sendMsgWithCheck(std::shared_ptr<Msg> pMsg, std::weak_ptr<TcpConnection>);
 
-	std::shared_ptr<IOEventManager> getPIOEM() {
-		return pIOEM;
+	IOEventManager *getPIOEM() {
+		return pIOEM.get();
+	}
+
+	TcpSession *getSession(){
+		return pTcpSession.get();
 	}
 
 private:

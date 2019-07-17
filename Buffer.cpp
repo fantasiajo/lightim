@@ -57,6 +57,11 @@ uint16_t Buffer::peekUint16()
 	return ::ntohs(*((uint16_t *)(&str[readIndex])));
 }
 
+uint32_t Buffer::peekUint32()
+{
+	return ::ntohl(*((uint32_t *)(&str[readIndex])));
+}
+
 uint16_t Buffer::getUint16()
 {
 	uint16_t n = peekUint16();

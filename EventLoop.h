@@ -6,17 +6,22 @@
 #include <mutex>
 #include <thread>
 #include "MsgCache.h"
+#include <unordered_map>
+#include <unordered_set>
 
 typedef std::function<void()> Task;
 
 class DB;
 class Epoller;
 class IOEventManager;
+class DataManager;
+class TcpConnection;
 
-class EventLoop {
+class EventLoop
+{
 public:
 	EventLoop();
-	~EventLoop(){}
+	~EventLoop() {}
 
 	EventLoop(const EventLoop &) = delete;
 	EventLoop &operator=(const EventLoop &) = delete;
@@ -33,19 +38,44 @@ public:
 	bool isInLoopThread();
 	void queueInLoop(const Task &task);
 
-	DB *getDb() {
-		return pDb.get();
-	}
-
-	std::weak_ptr<MsgCache> getPMsgCache(){
+	std::weak_ptr<MsgCache> getPMsgCache()
+	{
 		return pMsgCache;
 	}
-private:
 
+	std::weak_ptr<TcpConnection> getConnById(uint32_t id)
+	{
+		auto it = id2conn.find(id);
+		if (it == id2conn.end())
+		{
+			return std::shared_ptr<TcpConnection>();
+		}
+		return it->second;
+	}
+
+	void setConnById(uint32_t id, std::shared_ptr<TcpConnection> pTcpConn)
+	{
+		id2conn[id] = pTcpConn;
+	}
+
+	std::weak_ptr<DataManager> getpDM()
+	{
+		return pDM;
+	}
+
+	void closeConnection(std::weak_ptr<TcpConnection> pTcpConn)
+	{
+		pTcpConns.erase(pTcpConn.lock());
+	}
+
+	void addTcpConn(std::shared_ptr<TcpConnection>);
+	std::shared_ptr<TcpConnection> pullTcpConn(std::shared_ptr<TcpConnection>);
+
+private:
 	//成员变量
 	std::thread::id tid;
 
-	std::shared_ptr<DB> pDb;
+	std::shared_ptr<DataManager> pDM;
 
 	std::shared_ptr<Epoller> pEpoller;
 	std::vector<Task> tasks;
@@ -53,7 +83,7 @@ private:
 
 	int event_fd;
 	std::shared_ptr<IOEventManager> event_fd_ioem;
-	
+
 	std::shared_ptr<MsgCache> pMsgCache;
 
 	void readEventFd();
@@ -65,4 +95,7 @@ private:
 	void do_pending_task();
 
 	std::vector<IOEventManager *> activeIOEM;
+
+	std::unordered_set<std::shared_ptr<TcpConnection>> pTcpConns;
+	std::unordered_map<uint32_t, std::weak_ptr<TcpConnection>> id2conn;
 };
