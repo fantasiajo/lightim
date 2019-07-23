@@ -4,6 +4,8 @@
 #include "Socket.h"
 #include "Buffer.h"
 #include <functional>
+#include "TcpSession.h"
+#include "IOEventManager.h"
 
 class TcpSession;
 class IOEventManager;
@@ -26,6 +28,8 @@ public:
 	EventLoop *getloop() {
 		return ploop;
 	}
+
+	void setLoop(EventLoop* _ploop);
 
 	uint32_t getid() {
 		return id;
@@ -57,7 +61,7 @@ public:
 private:
 	EventLoop *ploop;
 
-	uint32_t id;
+	uint32_t id=0;
 
 	std::shared_ptr<Socket> pconfd;
 

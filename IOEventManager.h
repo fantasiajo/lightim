@@ -18,6 +18,10 @@ public:
 
 	int getfd();
 
+	void setLoop(EventLoop *_ploop){
+		ploop=_ploop;
+	}
+
 	uint32_t getEvents();
 
 	void setRecvEvents(uint32_t events);

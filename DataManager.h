@@ -17,6 +17,7 @@ public:
 
 	bool exists(uint32_t id,std::string pwd);
 	bool getLastMsgId(uint32_t id,uint64_t &lastmsgid);
+	bool updateLastRecvMsgId(uint32_t id,uint64_t lastRecvMsgId);
 	bool addUser(std::string nickname, std::string password,uint32_t &id);
 	bool addMsg(uint32_t fromid, uint32_t toid, Msg::MSG_TYPE, const std::string &content);
 	uint64_t addSendMsg(uint32_t id, const std::string &content);

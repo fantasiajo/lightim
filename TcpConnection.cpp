@@ -7,6 +7,7 @@
 #include "TcpServer.h"
 #include "Singleton.h"
 #include "easylogging++.h"
+#include "EventLoop.h"
 #include <string>
 #include <iostream>
 #include "LogManager.h"
@@ -17,7 +18,7 @@ TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 	pSendBuf(new Buffer()),
 	pRecvBuf(new Buffer())
 {
-	pIOEM.reset(new IOEventManager(_ploop, pconfd->getSockfd()));
+	pIOEM.reset(new IOEventManager(ploop, pconfd->getSockfd()));
 	pIOEM->type = "TcpConnection";
 	pIOEM->ip = pconfd->getPeerAddr();
 	pIOEM->port = pconfd->getPeerPort();
@@ -27,8 +28,8 @@ TcpConnection::TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket)
 
 void TcpConnection::connectionEstablished(std::shared_ptr<TcpConnection> pTcpConn)
 {
-	ploop->addTcpConn(pTcpConn);
 	pTcpSession.reset(new TcpSession(ploop,this));
+	ploop->addTcpConn(pTcpConn);
 	//pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,std::weak_ptr<TcpConnection>(this->shared_from_this())));
 	setMsgCallBack(std::bind(&TcpSession::handleMsg, pTcpSession.get(), pRecvBuf.get()));
 	pIOEM->enableReading();
@@ -118,9 +119,19 @@ void TcpConnection::handleError()
 
 void TcpConnection::handleClose()
 {
+	if(id){
+		pTcpSession->leave();
+	}
 	pconfd->close();
 	std::ostringstream oss;
 	oss << pconfd->getPeerAddr() + ":" << pconfd->getPeerPort() << " leaves.";
 	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
 	closeCallBack();
+}
+
+void TcpConnection::setLoop(EventLoop* _ploop){
+	ploop=_ploop;
+	setCloseCallBack(std::bind(&EventLoop::closeConnection,ploop,std::weak_ptr<TcpConnection>(this->shared_from_this())));
+	pTcpSession->setLoop(ploop);
+	pIOEM->setLoop(ploop);
 }

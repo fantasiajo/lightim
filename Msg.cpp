@@ -5,9 +5,11 @@
 #include "LogManager.h"
 #include "util.h"
 
-const std::unordered_map<Msg::MSG_TYPE,std::string> Msg::typeMetaData{
-		{MSG_TYPE::ADD_SB,"ADD FRIEND"}
-	};
+const std::unordered_map<Msg::MSG_TYPE, std::string> Msg::typeMetaData{
+	{MSG_TYPE::ADD_SB, "ADD FRIEND"},
+	{MSG_TYPE::AGREE_SB, "AGREE FRIEND"},
+	{MSG_TYPE::TO_SB, "CHAT"}
+};
 
 Msg::Msg(const std::string &content)
 	:len(content.length()),

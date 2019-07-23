@@ -21,14 +21,20 @@ public:
 
 	void handleMsg(Buffer *pBuffer);
 
+	void setLoop(EventLoop *_ploop){
+		ploop=_ploop;
+	}
+
 	void setLoginCallback(const std::function<void(uint32_t)> &cb);
 	void setConfirmCallback(const std::function<void()> &);
+
+	void leave();
 private:
 	EventLoop *ploop;
 
 	bool login;
-	uint32_t id;
-	uint64_t lastmsgid;
+	uint32_t id=0;
+	uint64_t lastRecvMsgId=0;
 
 	TcpConnection *pTcpConnection;
 

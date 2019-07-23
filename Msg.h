@@ -22,8 +22,8 @@ public:
 		//|id 4 bytes|pwdmd5 32bytes|
 		LOGIN_IN_ANS,//server -> client			4
 		//|successorfail 1 byte|fialtype 1 byte|
-		SHOW_SB,//								5
-		SHOW_SB_ANS,//							6
+		SHOW_SB,//	server <- client			5
+		SHOW_SB_ANS,//	server -> client		6
 		ADD_SB,//server <- client				7
 		//|id 4 bytes|
 		ADD_FROM_SB,//server -> client			8
@@ -32,17 +32,17 @@ public:
 		//|id 4 bytes|
 		AGREE_FROM_SB,//server -> client		a
 		//|id 4 bytes|
-		DELETE_SB,//							b
-		DELETE_SB_ANS,//						c
-		TO_SB,//								d
+		DELETE_SB,//	server <- client		b
+		DELETE_SB_ANS,//server -> client		c
+		TO_SB,//		server <- client		d
 		//|targetid 4 bytes|content len - 3 - 4 bytes|
-		FROM_SB,//								e
+		FROM_SB,//		server -> client		e
 		//|fromid 4 bytes|msgid 8 bytes|content len - 3 - 4 - 8bytes|
-		GET_FRIENDS,//							f
+		GET_FRIENDS,//	server <- client		f
 		//||
-		GET_FRIENDS_ANS,//						10
+		GET_FRIENDS_ANS,//	sever -> client		10
 		//|id 4 + nickname 32|...
-		HEART_BEAT//							11
+		HEART_BEAT//	server <-> client		11
 	};
 
 	Msg(const std::string&);

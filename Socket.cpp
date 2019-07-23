@@ -74,7 +74,7 @@ void Socket::bind() {
 		//LOG(FATAL) << "bind:" << strerror(errno);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("bind")+strerror(errno));
 		//todo sleep
-		exit(1);
+		//exit(1);
 	}
 }
 

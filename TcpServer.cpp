@@ -121,7 +121,7 @@ void TcpServer::chat(uint32_t fromid, uint32_t toid, std::string content, const 
 		return;
 	}
 
-	std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 8 + 4 + content.length(), Msg::MSG_TYPE::AGREE_FROM_SB));
+	std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 8 + 4 + content.length(), Msg::MSG_TYPE::FROM_SB));
 	pMsg->writeUint64(0);
 	pMsg->writeUint32(fromid);
 	pMsg->writeString(content.c_str(),content.length());

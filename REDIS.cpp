@@ -87,7 +87,7 @@ bool REDIS::queuePeekHead(std::string key, std::string &str){
     bool success = true;
     reply = static_cast<redisReply *>(redisCommand(conn,"lindex u%s 0",key.c_str()));
     if(reply->type==REDIS_REPLY_STRING){
-        str = std::string(reply->str,reply->type);
+        str = std::string(reply->str,reply->len);
     }
     else{
         success = false;
@@ -106,12 +106,19 @@ bool REDIS::queueContent(std::string key, std::vector<std::string> &strs){
         for(int i=0;i<reply->elements;++i){
             strs.emplace_back(reply->element[i]->str,reply->element[i]->len);
         }
+    	freeReplyObject(reply);
+
+    	reply = static_cast<redisReply *>(redisCommand(conn,"del u%s",key.c_str()));
+	if(reply->type=REDIS_REPLY_ERROR){
+       		Singleton<LogManager>::instance().logInQueue(LogManager::ERROR_LEVEL,reply->str);
+	}
+	freeReplyObject(reply);
     }
     else{
         success = false;
         Singleton<LogManager>::instance().logInQueue(LogManager::ERROR_LEVEL,reply->str);
+    	freeReplyObject(reply);
     }
-    freeReplyObject(reply);
     return success;
 }
 

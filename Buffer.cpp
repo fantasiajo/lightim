@@ -1,48 +1,60 @@
 #include "Buffer.h"
 #include "EventLoop.h"
 #include "Msg.h"
+#include <cstdint>
 
 Buffer::Buffer()
-	:readIndex(0),writeIndex(0)
+	: readIndex(0), writeIndex(0)
 {
 	str.resize(MINSIZE);
 }
 
-bool Buffer::empty() {
+bool Buffer::empty()
+{
 	return readIndex == writeIndex;
 }
 
-int Buffer::length() {
+int Buffer::length()
+{
 	return writeIndex - readIndex;
 }
 
-int Buffer::leftSpace() {
+int Buffer::leftSpace()
+{
 	return str.size() - writeIndex;
 }
 
-void Buffer::in(const char *buf, int len) {
-	while (leftSpace() < len) {
+void Buffer::in(const char *buf, int len)
+{
+	while (leftSpace() < len)
+	{
 		str.resize(str.size() * 2);
 	}
-	while (len--) {
+	while (len--)
+	{
 		str[writeIndex++] = *(buf++);
 	}
 }
 
-void Buffer::out(char *buf, int len) {
-	while (len--) {
+void Buffer::out(char *buf, int len)
+{
+	while (len--)
+	{
 		*(buf++) = str[readIndex++];
 	}
 }
 
 void Buffer::recycleSpace()
 {
-	if (str.size() > MINSIZE && length() * 5 < str.size()) {
+	if (str.size() > MINSIZE && length() * 5 < str.size())
+	{
 		std::copy(str.begin() + readIndex, str.begin() + writeIndex, str.begin());
-		if (length() > MINSIZE) {
+		if (length() > MINSIZE)
+		{
 			str.resize(length());
 		}
-		else {
+		else
+		{
 			str.resize(MINSIZE);
 		}
 		str.shrink_to_fit();
@@ -76,9 +88,16 @@ uint32_t Buffer::getUint32()
 	return ::ntohl(*((uint32_t *)(&str[tmp])));
 }
 
+uint64_t Buffer::getUint64()
+{
+	auto tmp = readIndex;
+	readIndex += sizeof(uint64_t);
+	return ::ntohll(*((uint64_t *)(&str[tmp])));
+}
+
 uint8_t Buffer::getUint8()
 {
-	return *((uint8_t*)(&str[readIndex++]));
+	return *((uint8_t *)(&str[readIndex++]));
 }
 
 std::string Buffer::getString(int len)
@@ -89,21 +108,25 @@ std::string Buffer::getString(int len)
 	return res;
 }
 
-int Buffer::readin(Socket *psocket, int len) {//只有recvbuf会调用
-	while (leftSpace() < len) {
-		str.resize(str.size() * 2);//类似vector的策略
+int Buffer::readin(Socket *psocket, int len)
+{ //只有recvbuf会调用
+	while (leftSpace() < len)
+	{
+		str.resize(str.size() * 2); //类似vector的策略
 	}
 	int cnt = psocket->read(&str[writeIndex], len);
-	if (cnt > 0) {
+	if (cnt > 0)
+	{
 		writeIndex += cnt;
 	}
 	return cnt;
 }
 
-int Buffer::writeout(Socket *psocket)//只有sendbuf会调用
+int Buffer::writeout(Socket *psocket) //只有sendbuf会调用
 {
 	int cnt = psocket->write(&str[readIndex], length());
-	if (cnt > 0) {
+	if (cnt > 0)
+	{
 		readIndex += cnt;
 	}
 	return cnt;
@@ -117,15 +140,17 @@ void Buffer::pushMsg(std::shared_ptr<Msg> pMsg)
 
 void Buffer::pushMsgInLoop(std::shared_ptr<Msg> pMsg)
 {
-	if (ploop->isInLoopThread()) {
+	if (ploop->isInLoopThread())
+	{
 		pushMsg(pMsg);
 	}
-	else {
-		ploop->queueInLoop(std::bind(&Buffer::pushMsgInLoop, this, pMsg));//连续递归，直到到达负责该buffer的loop所在的线程
+	else
+	{
+		ploop->queueInLoop(std::bind(&Buffer::pushMsgInLoop, this, pMsg)); //连续递归，直到到达负责该buffer的loop所在的线程
 	}
 }
 
-void Buffer::setMsgWritenCallback(const std::function<void()>& cb)
+void Buffer::setMsgWritenCallback(const std::function<void()> &cb)
 {
 	msgWritenCallback = cb;
 }

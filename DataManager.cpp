@@ -4,6 +4,7 @@
 #include <string>
 #include "Msg.h"
 #include <sstream>
+#include <cstdint>
 
 DataManager::DataManager(EventLoop * _ploop)
 	:pDB(new DB())
@@ -33,7 +34,7 @@ bool DataManager::exists(uint32_t id, std::string pwd)
 
 bool DataManager::getLastMsgId(uint32_t id,uint64_t &lastmsgid){
 	QUERY_RESULT res;
-	pDB->exeSQL(std::string("select lastmsgid from user where user_id = '") + std::to_string(id) + "'",res);
+	pDB->exeSQL(std::string("select lastRecvMsgid from user where user_id = '") + std::to_string(id) + "'",res);
 	if(res.dataMatrix.empty()){
 		return false;
 	}
@@ -41,6 +42,11 @@ bool DataManager::getLastMsgId(uint32_t id,uint64_t &lastmsgid){
 		lastmsgid=std::stoull(res.dataMatrix[0][0]);
 		return true;
 	}
+}
+
+bool DataManager::updateLastRecvMsgId(uint32_t id,uint64_t lastRecvMsgId){
+	QUERY_RESULT res;
+	return pDB->exeSQL(std::string("update user set ")+"lastRecvMsgId="+std::to_string(lastRecvMsgId)+" where user_id="+std::to_string(id),res);
 }
 
 bool DataManager::addUser(std::string nickname, std::string password,uint32_t &id)
@@ -120,7 +126,7 @@ bool DataManager::getMsgsById(uint32_t id, std::vector<std::shared_ptr<Msg>> &pM
 			<< " and id > " << startid;
 	}
 	else{
-		oss << "select id,content from msg where to_id = " << id 
+		oss << "select id,content from send_msg where to_id = " << id 
 			<< " and id > " << startid << " and id < " << endid;
 	}
 	if(pDB->exeSQL(oss.str(),res)){
@@ -138,7 +144,7 @@ bool DataManager::getMsgsById(uint32_t id, std::vector<std::shared_ptr<Msg>> &pM
 uint64_t DataManager::addSendMsg(uint32_t id, const std::string &content){
 	QUERY_RESULT res;	
 	std::ostringstream oss;
-	oss << "insert into send_msg(to_id,content) values(" << id << "," << pDB->escape(content) << ")";
+	oss << "insert into send_msg(to_id,content) values(" << id << ",'" << pDB->escape(content) << "')";
 	if(pDB->exeSQL(oss.str(),res)){
 		if(pDB->exeSQL("SELECT LAST_INSERT_ID()",
 			res

@@ -32,6 +32,7 @@ public:
 	uint8_t getUint8();
 	uint16_t getUint16();
 	uint32_t getUint32();
+	uint64_t getUint64();
 
 	std::string getString(int len);
 

@@ -57,6 +57,7 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
 			}
 			handleLoginIn(pBuffer);
+			return;//必须
 			break;
 		case Msg::MSG_TYPE::SHOW_SB:
 			handleShowSb();
@@ -107,7 +108,9 @@ void TcpSession::handleConfirm(Buffer * pBuffer)
 	auto type = pBuffer->getUint8();
 	switch(type){
 		case Msg::MSG_TYPE::FROM_SB:
-			//update lastmagid
+		case Msg::MSG_TYPE::ADD_FROM_SB:
+		case Msg::MSG_TYPE::AGREE_FROM_SB:
+			lastRecvMsgId=pBuffer->getUint64();
 			break;
 		default:
 			break;
@@ -156,13 +159,19 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 	EventLoop *ownPloop=Singleton<EventLoopThreadManager>::instance().getEventLoopById(id);
 	if(ownPloop!=ploop){//转移TcpConnection的所有权
 		ploop->deleteIOEM(pTcpConnection->getPIOEM());
+		//以下两行需要改
 		ownPloop->addIOEM(pTcpConnection->getPIOEM());
 		ownPloop->addTcpConn(ploop->pullTcpConn(pTcpConnection->shared_from_this()));
+		ownPloop->runInLoop(std::bind(&TcpSession::handleLoginIn,this,pBuffer));
+
+		//ownPloop->addIOEM(pTcpConnection->getPIOEM());
 		/*
 		EventLoopThreadManager::getEventLoopById(id)->queueInLoop(
 			std::bind(TcpSession::handleLoginIn,this,pBuffer)
 		);
 		*/
+		
+		//ploop->deleteIOEM(pTcpConnection->getPIOEM());
 		return;
 	}
 	
@@ -172,11 +181,14 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 	pTcpConnection->sendMsg(pConMsg);
 	
 	//登录逻辑
+	id = pBuffer->getUint32();
 	std::string pwd = pBuffer->getString(32);
+
+	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL,std::string("login:")+std::to_string(id)+pwd);
 
 	if (ploop->getpDM().lock()->exists(id, pwd)) {//存在该用户
 		auto weakPTcpConn=ploop->getConnById(id);
-		if (!weakPTcpConn.expired()) {//当前已登录//待改进
+		if (!(weakPTcpConn.expired())) {//当前已登录//待改进
 			std::shared_ptr<Msg> pMsg(new Msg(Msg::headerLen + 2, Msg::MSG_TYPE::LOGIN_IN_ANS));
 			pMsg->writeUint8(FAIL);
 			pMsg->writeUint8(LOGINED);
@@ -189,9 +201,9 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 			this->id = id;
 			ploop->setConnById(id,pTcpConnection->shared_from_this());
 			pTcpConnection->sendMsg(pMsg);
-			ploop->getpDM().lock()->getLastMsgId(id,lastmsgid);
+			ploop->getpDM().lock()->getLastMsgId(id,lastRecvMsgId);
 			Singleton<LogManager>::instance().logInQueue(LogManager::DEBUG_LEVEL,
-				std::string("Get lastmsgid of ")+std::to_string(id)+"="+std::to_string(lastmsgid));
+				std::string("Get lastmsgid of ")+std::to_string(id)+"="+std::to_string(lastRecvMsgId));
 			loadCache(id);
 		}
 	}
@@ -335,10 +347,12 @@ void TcpSession::loadCache(uint32_t id){
 	if(weakPMsgCache.lock()->size(id) > 0){
 		uint64_t msgid;
 		weakPMsgCache.lock()->peekMsgid(id,msgid);
-		ploop->getpDM().lock()->getMsgsById(id,pMsgs,lastmsgid,msgid);
+		Singleton<LogManager>::instance().logInQueue(LogManager::DEBUG_LEVEL,
+			std::string("Peek lastRecvMsgId of")+std::to_string(id)+":"+std::to_string(msgid));
+		ploop->getpDM().lock()->getMsgsById(id,pMsgs,lastRecvMsgId,msgid);
 	}
 	else{
-		ploop->getpDM().lock()->getMsgsById(id,pMsgs,lastmsgid,0);
+		ploop->getpDM().lock()->getMsgsById(id,pMsgs,lastRecvMsgId,0);
 	}
 	for(const std::shared_ptr<Msg> &pMsg:pMsgs){
 		pTcpConnection->sendMsg(pMsg);
@@ -352,4 +366,6 @@ void TcpSession::loadCache(uint32_t id){
 	}
 }
 
-
+void TcpSession::leave(){
+	ploop->getpDM().lock()->updateLastRecvMsgId(id,lastRecvMsgId);
+}

@@ -9,6 +9,7 @@
 #include "LogManager.h"
 #include "Singleton.h"
 #include "DataManager.h"
+#include "TcpConnection.h"
 
 EventLoop::EventLoop()
 	:tid(std::this_thread::get_id()),
@@ -126,6 +127,7 @@ void EventLoop::do_pending_task() {
 }
 
 void EventLoop::addTcpConn(std::shared_ptr<TcpConnection> pTcpConn){
+	pTcpConn->setLoop(this);
 	pTcpConns.insert(pTcpConn);
 }
 

@@ -69,10 +69,13 @@ void Epoller::addIOEM(IOEventManager * pIOEM)
 	if (::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pIOEM->getfd(), &tmpev) == -1) {
 		//LOG(ERROR) << "epoll_ctl add " << pIOEM->getfd() << "failed.";
 		std::ostringstream oss;
-		oss << "epoll_ctl add" << pIOEM->getfd() << "failed.";
-		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::ERROR_LEVEL, oss.str());
+		oss << "epoll_ctl add" << pIOEM->getfd() << "failed:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 		return;
 	}
+	std::ostringstream oss;
+	oss << pIOEM << "epoll_ctl add" << pIOEM->getfd() << "success." << epoll_fd;
+	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 	IOEMset.insert(pIOEM);
 }
 
@@ -83,14 +86,19 @@ void Epoller::updateIOEM(IOEventManager* pIOEM) {
 	if (::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, pIOEM->getfd(), &tmpev) == -1) {
 		//LOG(ERROR) << "epoll_ctl mod " << pIOEM->getfd() << "failed.";
 		std::ostringstream oss;
-		oss << "epoll_ctl mod" << pIOEM->getfd() << "failed.";
-		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::ERROR_LEVEL, oss.str());
+		oss << pIOEM << "epoll_ctl mod" << pIOEM->getfd() << "failed:" << strerror(errno);
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 		return;
 	}
 }
 
 void Epoller::deleteIOEM(IOEventManager* pIOEM) {
-	::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pIOEM->getfd(), NULL);
+	if(::epoll_ctl(epoll_fd, EPOLL_CTL_DEL, pIOEM->getfd(), NULL)==-1){
+		std::ostringstream oss;
+		oss << pIOEM << "epoll_ctl del" << pIOEM->getfd() << "failed:" << errno << strerror(errno) << epoll_fd;
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
+		return;
+	}
 	IOEMset.erase(pIOEM);
 }
 
