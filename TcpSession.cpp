@@ -199,6 +199,7 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 			pMsg->writeUint8(SUCCESS);
 			login = true;
 			this->id = id;
+			pTcpConnection->setid(id);
 			ploop->setConnById(id,pTcpConnection->shared_from_this());
 			pTcpConnection->sendMsg(pMsg);
 			ploop->getpDM().lock()->getLastMsgId(id,lastRecvMsgId);
@@ -359,10 +360,12 @@ void TcpSession::loadCache(uint32_t id){
 	}
 
 	//从redis缓存读取缓存消息并加入buffer中
-	std::vector<std::string> msgs;
-	weakPMsgCache.lock()->content(id,msgs);
-	for(const std::string &msg:msgs){
-		pTcpConnection->send(msg.c_str(),msg.length());
+	if(weakPMsgCache.lock()->size(id) > 0){
+		std::vector<std::string> msgs;
+		weakPMsgCache.lock()->content(id,msgs);
+		for(const std::string &msg:msgs){
+			pTcpConnection->send(msg.c_str(),msg.length());
+		}
 	}
 }
 

@@ -62,8 +62,9 @@ bool DB::exeSQL(std::string sql, QUERY_RESULT &queryResult)
 		for (int i = 0; i < numRows; ++i) {
 			queryResult.dataMatrix[i].resize(numCols);
 			row = mysql_fetch_row(res);
+			lengths = mysql_fetch_lengths(res);
 			for (int j = 0; j < numCols; ++j) {
-				queryResult.dataMatrix[i][j] = std::string(row[j]);
+				queryResult.dataMatrix[i][j] = std::string(row[j],lengths[j]);
 			}
 		}
 
