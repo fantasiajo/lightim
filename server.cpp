@@ -5,6 +5,7 @@
 #include "TcpServer.h"
 #include "easylogging++.h"
 #include "LogManager.h"
+#include <sys/sysinfo.h>
 
 INITIALIZE_EASYLOGGINGPP//初始化easylogging
 int main() {
@@ -14,7 +15,7 @@ int main() {
 	EventLoop loop;
 	Singleton<ThreadManager>::instance().newThread(1,
 		std::bind(&LogManager::loop, &Singleton<LogManager>::instance()));
-	Singleton<EventLoopThreadManager>::instance().newEventLoopThread(3);
+	Singleton<EventLoopThreadManager>::instance().newEventLoopThread(get_nprocs());
 	Singleton<TcpServer>::instance().init(&loop, "0.0.0.0", 4399);
 	Singleton<TcpServer>::instance().start();
 	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, "Welcome to lightim!");
