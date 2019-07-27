@@ -77,7 +77,9 @@ bool REDIS::queuePop(std::string key){
 
 int REDIS::queueLen(std::string key){
     int res;
-    reply = static_cast<redisReply *>(redisCommand(conn,"llen u%s",key.c_str()));
+    while(!(reply = static_cast<redisReply *>(redisCommand(conn,"llen u%s",key.c_str())))){
+        Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::ERROR_LEVEL,std::to_string((long long)(this))+conn->errstr);
+    }
     res = reply->integer;
     freeReplyObject(reply);
     return res;

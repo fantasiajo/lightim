@@ -13,8 +13,7 @@
 TcpSession::TcpSession(EventLoop *_ploop,TcpConnection *_pTcpCon)
 	:ploop(_ploop),
 	login(false),
-	pTcpConnection(_pTcpCon),
-	weakPMsgCache(_ploop->getPMsgCache())
+	pTcpConnection(_pTcpCon)
 {
 }
 
@@ -45,7 +44,7 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 				std::ostringstream oss;
 				oss << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
 					<< ": " << pTcpConnection->getfd()->getPeerPort();
-				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 			}
 			handleSignUp(pBuffer);
 			break;
@@ -54,7 +53,7 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 				std::ostringstream oss;
 				oss << "LOGIN_IN from" << pTcpConnection->getfd()->getPeerAddr()
 					<< ": " << pTcpConnection->getfd()->getPeerPort();
-				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+				//Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 			}
 			handleLoginIn(pBuffer);
 			return;//必须
@@ -79,7 +78,7 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 				std::ostringstream oss;
 				oss << "GET_FRIENDS from" << pTcpConnection->getfd()->getPeerAddr()
 						<< ": " << pTcpConnection->getfd()->getPeerPort() << " " << pTcpConnection->getid();
-				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 			}
 			handleGetFriends(pBuffer);
 			break;
@@ -139,7 +138,7 @@ void TcpSession::handleSignUp(Buffer *pBuffer)
 		std::ostringstream oss;
 		oss << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
 			<< ": " << pTcpConnection->getfd()->getPeerPort() << "success." << nickname << ":" << password;
-		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 		pTcpConnection->sendMsg(pMsg);
 	}
 	else {
@@ -148,7 +147,7 @@ void TcpSession::handleSignUp(Buffer *pBuffer)
 		std::ostringstream oss;
 		oss << "SIGN_UP from" << pTcpConnection->getfd()->getPeerAddr()
 			<< ": " << pTcpConnection->getfd()->getPeerPort() << "fail." << nickname << ":" << password;
-		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 		pTcpConnection->sendMsg(pMsg);
 	}
 }
@@ -160,18 +159,11 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 	if(ownPloop!=ploop){//转移TcpConnection的所有权
 		ploop->deleteIOEM(pTcpConnection->getPIOEM());
 		//以下两行需要改
-		ownPloop->addIOEM(pTcpConnection->getPIOEM());
-		ownPloop->addTcpConn(ploop->pullTcpConn(pTcpConnection->shared_from_this()));
-		ownPloop->runInLoop(std::bind(&TcpSession::handleLoginIn,this,pBuffer));
-
-		//ownPloop->addIOEM(pTcpConnection->getPIOEM());
-		/*
-		EventLoopThreadManager::getEventLoopById(id)->queueInLoop(
-			std::bind(TcpSession::handleLoginIn,this,pBuffer)
-		);
-		*/
-		
-		//ploop->deleteIOEM(pTcpConnection->getPIOEM());
+		std::vector<Task> tasks_;
+		tasks_.push_back(std::bind(&EventLoop::addIOEM,ownPloop,pTcpConnection->getPIOEM()));
+		tasks_.push_back(std::bind(&EventLoop::addTcpConn,ownPloop,ploop->pullTcpConn(pTcpConnection->shared_from_this())));
+		tasks_.push_back(std::bind(&TcpSession::handleLoginIn,this,pBuffer));
+		ownPloop->runInLoop(tasks_);
 		return;
 	}
 	
@@ -184,7 +176,7 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 	id = pBuffer->getUint32();
 	std::string pwd = pBuffer->getString(32);
 
-	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL,std::string("login:")+std::to_string(id)+pwd);
+	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL,std::string("login:")+std::to_string(id)+" "+pwd);
 
 	if (ploop->getpDM().lock()->exists(id, pwd)) {//存在该用户
 		auto weakPTcpConn=ploop->getConnById(id);
@@ -320,7 +312,7 @@ void TcpSession::handleHeartBeat()
 {
 	std::ostringstream oss;
 	oss << std::this_thread::get_id() << " HeartBeat " << heartBeatcnt++;
-	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
+	Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 	std::shared_ptr<Msg> pConMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::CONFIRM));
 	pConMsg->writeUint8(Msg::MSG_TYPE::HEART_BEAT);
 	pTcpConnection->sendMsg(pConMsg);
@@ -345,9 +337,9 @@ void TcpSession::handleHeartBeat()
 void TcpSession::loadCache(uint32_t id){
 	std::vector<std::shared_ptr<Msg>> pMsgs;
 	//从sql中读取未发送且未缓存的消息到buffer中
-	if(weakPMsgCache.lock()->size(id) > 0){
+	if(ploop->getPMsgCache().lock()->size(id) > 0){
 		uint64_t msgid;
-		weakPMsgCache.lock()->peekMsgid(id,msgid);
+		ploop->getPMsgCache().lock()->peekMsgid(id,msgid);
 		Singleton<LogManager>::instance().logInQueue(LogManager::DEBUG_LEVEL,
 			std::string("Peek lastRecvMsgId of")+std::to_string(id)+":"+std::to_string(msgid));
 		ploop->getpDM().lock()->getMsgsById(id,pMsgs,lastRecvMsgId,msgid);
@@ -360,9 +352,9 @@ void TcpSession::loadCache(uint32_t id){
 	}
 
 	//从redis缓存读取缓存消息并加入buffer中
-	if(weakPMsgCache.lock()->size(id) > 0){
+	if(ploop->getPMsgCache().lock()->size(id) > 0){
 		std::vector<std::string> msgs;
-		weakPMsgCache.lock()->content(id,msgs);
+		ploop->getPMsgCache().lock()->content(id,msgs);
 		for(const std::string &msg:msgs){
 			pTcpConnection->send(msg.c_str(),msg.length());
 		}

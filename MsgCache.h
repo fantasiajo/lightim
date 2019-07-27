@@ -4,11 +4,14 @@
 #include "Msg.h"
 #include <memory>
 
-
+class EventLoop;
 
 class MsgCache{
 public:
-    MsgCache();
+    MsgCache(EventLoop *_ploop)
+        :ploop(_ploop){
+
+    }
     ~MsgCache();
 
     MsgCache(const MsgCache &) = delete;
@@ -22,5 +25,6 @@ public:
     int size(uint32_t id);
     bool content(uint32_t id, std::vector<std::string> &msgs);
 private:
+    EventLoop *ploop;
     REDIS r;
 };

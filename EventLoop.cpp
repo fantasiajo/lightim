@@ -17,7 +17,7 @@ EventLoop::EventLoop()
 	event_fd(createEventFd()),
 	event_fd_ioem(new IOEventManager(this, event_fd)),
 	pDM(new DataManager(this)),
-	pMsgCache(new MsgCache())
+	pMsgCache(new MsgCache(this))
 {
 	event_fd_ioem->enableReading();
 	event_fd_ioem->setReadCallBack(std::bind(&EventLoop::readEventFd,this));
@@ -108,6 +108,24 @@ void EventLoop::queueInLoop(const Task & task)
 {
 	std::unique_lock<std::mutex> lck(mtx_tasks);
 	tasks.push_back(task);
+	wakeup();
+}
+
+void EventLoop::runInLoop(std::vector<Task> &tasks_) {
+	if (isInLoopThread()) {
+		for(auto &task:tasks_){
+			task();
+		}
+	}
+	else {
+		queueInLoop(tasks_);
+	}
+}
+
+void EventLoop::queueInLoop(std::vector<Task> &tasks_)
+{
+	std::unique_lock<std::mutex> lck(mtx_tasks);
+	tasks.insert(tasks.end(),tasks_.begin(),tasks_.end());
 	wakeup();
 }
 

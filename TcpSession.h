@@ -43,8 +43,6 @@ private:
 
 	int heartBeatcnt = 0;
 
-	std::weak_ptr<MsgCache> weakPMsgCache;
-
 	void handleConfirm(Buffer *pBuffer);
 	void handleSignUp(Buffer *pBuffer);//|nickname 32 bytes|md5passwd 32 bytes|
 	void handleLoginIn(Buffer *pBuffer);

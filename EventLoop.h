@@ -35,8 +35,10 @@ public:
 	void deleteIOEM(IOEventManager *pIOEM);
 
 	void runInLoop(const Task &task);
+	void runInLoop(std::vector<Task> &);
 	bool isInLoopThread();
 	void queueInLoop(const Task &task);
+	void queueInLoop(std::vector<Task> &);
 
 	std::weak_ptr<MsgCache> getPMsgCache()
 	{

@@ -1,9 +1,7 @@
 #include "MsgCache.h"
 #include "util.h"
-
-MsgCache::MsgCache(){
-
-}
+#include "EventLoop.h"
+#include <iostream>
 
 MsgCache::~MsgCache(){
 
@@ -27,7 +25,13 @@ bool MsgCache::pop(uint32_t id){
 }
 
 int MsgCache::size(uint32_t id){
-    return r.queueLen(std::to_string(id));
+    if(ploop->isInLoopThread()){
+        return r.queueLen(std::to_string(id));
+    }
+    else{
+        std::cerr << "bomb" << std::endl;
+        exit(111);
+    }
 }
 
 bool MsgCache::content(uint32_t id, std::vector<std::string> &msgs){
