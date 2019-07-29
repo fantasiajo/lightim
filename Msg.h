@@ -37,7 +37,7 @@ public:
 		TO_SB,//		server <- client		d
 		//|targetid 4 bytes|content len - 3 - 4 bytes|
 		FROM_SB,//		server -> client		e
-		//|fromid 4 bytes|msgid 8 bytes|content len - 3 - 4 - 8bytes|
+		//|msgid 8 bytes|fromid 4 bytes|content len - 3 - 4 - 8bytes|
 		GET_FRIENDS,//	server <- client		f
 		//||
 		GET_FRIENDS_ANS,//	sever -> client		10
