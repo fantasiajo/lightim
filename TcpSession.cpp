@@ -196,7 +196,7 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 			ploop->getpDM().lock()->getLastMsgId(id,lastRecvMsgId);
 			Singleton<LogManager>::instance().logInQueue(LogManager::DEBUG_LEVEL,
 				std::string("Get lastmsgid of ")+std::to_string(id)+"="+std::to_string(lastRecvMsgId));
-			loadCache(id);
+			//loadCache(id);
 		}
 	}
 	else {//不存在该用户
@@ -276,6 +276,7 @@ void TcpSession::handleGetFriends(Buffer * pBuffer)
 		pMsg->writeString(idname[i].second.c_str(), idname[i].second.length());
 	}
 	pTcpConnection->sendMsg(pMsg);
+	loadCache(id);
 }
 
 void TcpSession::handleHeartBeat()
