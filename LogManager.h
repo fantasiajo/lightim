@@ -14,7 +14,10 @@ public:
 		std::string content;
 	}ONELOG;
 
-	LogManager() = default;
+	LogManager(){
+		//配置日志格式
+		el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%datetime %thread %level: %msg");
+	};
 	~LogManager() = default;
 	LogManager(const LogManager &) = delete;
 	LogManager(LogManager &&) = delete;

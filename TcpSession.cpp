@@ -53,7 +53,7 @@ void TcpSession::handleMsg(Buffer *pBuffer) {
 				std::ostringstream oss;
 				oss << "LOGIN_IN from" << pTcpConnection->getfd()->getPeerAddr()
 					<< ": " << pTcpConnection->getfd()->getPeerPort();
-				//Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
+				Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::DEBUG_LEVEL, oss.str());
 			}
 			handleLoginIn(pBuffer);
 			return;//必须
@@ -158,7 +158,6 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 	EventLoop *ownPloop=Singleton<EventLoopThreadManager>::instance().getEventLoopById(id);
 	if(ownPloop!=ploop){//转移TcpConnection的所有权
 		ploop->deleteIOEM(pTcpConnection->getPIOEM());
-		//以下两行需要改
 		std::vector<Task> tasks_;
 		tasks_.push_back(std::bind(&EventLoop::addIOEM,ownPloop,pTcpConnection->getPIOEM()));
 		tasks_.push_back(std::bind(&EventLoop::addTcpConn,ownPloop,ploop->pullTcpConn(pTcpConnection->shared_from_this())));
@@ -257,35 +256,6 @@ void TcpSession::handleToSb(Buffer *pBuffer,int msglen)
 			static_cast<Task>(std::bind(&TcpConnection::sendMsgWithCheck,pTcpConnection,pConMsg,std::weak_ptr<TcpConnection>(pTcpConnection->shared_from_this())))
 		)
 	);
-
-	// //回复确认收到包
-	// std::shared_ptr<Msg> pConMsg(new Msg(Msg::headerLen + 1, Msg::MSG_TYPE::CONFIRM));
-	// pConMsg->writeUint8(Msg::MSG_TYPE::TO_SB);
-	// pTcpConnection->sendMsg(pConMsg,pTcpConnection->shared_from_this());
-
-	// std::shared_ptr<Msg> pMsg(new Msg(msglen, Msg::MSG_TYPE::FROM_SB));
-	// auto targetid = pBuffer->getUint32();
-	// pMsg->writeUint32(id);
-	// auto content = pBuffer->getString(msglen - Msg::headerLen - 4);
-	// //将消息加入数据库
-	// DataManager::addChat(ploop,id,targetid,content);
-	// //LOG(INFO) << "From " << id << " to " << targetid << ":" << content << std::endl;
-	// /*
-	// std::string logstr("From");
-	// logstr.append(std::to_string(id));
-	// logstr.append(" to ");
-	// logstr.append(std::to_string(targetid));
-	// logstr.append(":");
-	// logstr.append(content);
-	// */
-	// std::ostringstream oss;
-	// oss << "From " << id << " to " << targetid << ":" << content;
-	// Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::INFO_LEVEL, oss.str());
-	// pMsg->writeString(content.c_str(), content.length());
-
-	// //发送消息
-	// sendMsg(targetid,true,pMsg);
-	// //Singleton<TcpServer>::instance().forwardMsg(targetid, pMsg);
 }
 
 void TcpSession::handleGetFriends(Buffer * pBuffer)
@@ -317,22 +287,6 @@ void TcpSession::handleHeartBeat()
 	pConMsg->writeUint8(Msg::MSG_TYPE::HEART_BEAT);
 	pTcpConnection->sendMsg(pConMsg);
 }
-
-// void TcpSession::sendMsg(uint32_t targetid,bool addInCache, std::shared_ptr<Msg> pMsg){
-// 	//将消息加入缓存??有些消息需要加，有些消息不需要加，与客户端登录注册之类的不用加入
-// 	if(addInCache){
-// 		ploop->getPMsgCache().lock()->push(targetid,pMsg);
-// 	}
-// 	std::shared_ptr<TcpConnection> pTcpConn=Singleton<TcpServer>::instance().getConnById(targetid).lock();
-// 	if(pTcpConn){
-// 		if(pTcpConn->getloop()->isInLoopThread()){
-// 			pTcpConn->sendMsg(pMsg,pTcpConn);
-// 		}
-// 		else{
-// 			pTcpConn->getloop()->queueInLoop(std::bind(&TcpConnection::sendMsg,pTcpConn.get(),pMsg,std::weak_ptr<TcpConnection>(pTcpConn)));
-// 		}
-// 	}
-// }
 
 void TcpSession::loadCache(uint32_t id){
 	std::vector<std::shared_ptr<Msg>> pMsgs;

@@ -15,7 +15,7 @@ class Msg;
 class TcpConnection :public std::enable_shared_from_this<TcpConnection> {
 public:
 	TcpConnection(EventLoop *_ploop, std::shared_ptr<Socket> pSocket);
-	~TcpConnection();
+	~TcpConnection() = default;
 	TcpConnection(const TcpConnection &) = delete;
 	TcpConnection &operator=(const TcpConnection &) = delete;
 	TcpConnection(TcpConnection &&) = delete;
@@ -44,9 +44,7 @@ public:
 	void setMsgCallBack(const std::function<void()>&);
 	void setCloseCallBack(const std::function<void()> &);
 
-	void sendInLoop(const char *buf, int len);
 	void send(const char*buf, int len);
-	void sendInLoop(std::shared_ptr<Msg> pMsg);
 	void sendMsg(std::shared_ptr<Msg> pMsg);
 	void sendMsgWithCheck(std::shared_ptr<Msg> pMsg, std::weak_ptr<TcpConnection>);
 

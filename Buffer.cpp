@@ -108,8 +108,8 @@ std::string Buffer::getString(int len)
 	return res;
 }
 
-int Buffer::readin(Socket *psocket, int len)
-{ //只有recvbuf会调用
+int Buffer::readin(Socket *psocket, int len) //只有recvbuf会调用
+{ 
 	while (leftSpace() < len)
 	{
 		str.resize(str.size() * 2); //类似vector的策略

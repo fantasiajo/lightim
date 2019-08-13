@@ -93,9 +93,7 @@ void Socket::listen()
 std::shared_ptr<Socket> Socket::accept() {
 	int tmpfd = ::accept4(sockfd,NULL,0, SOCK_NONBLOCK);
 	if (tmpfd == -1) {
-		//LOG(FATAL) << "accept4:" << strerror(errno);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("accept4")+strerror(errno));
-		//todo sleep
 		return nullptr;
 	}
 
@@ -103,9 +101,7 @@ std::shared_ptr<Socket> Socket::accept() {
 	socklen_t len=sizeof(sockaddr_in);
 
 	if (getpeername(tmpfd, (struct sockaddr *)&sockaddr, &len) == -1) {
-		//LOG(FATAL) << "getpeername:" << strerror(errno);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("getpeername")+strerror(errno));
-		//todo sleep
 		return nullptr;
 	}
 
@@ -211,10 +207,7 @@ std::string Socket::getAddr() const{
 	char ip[INET_ADDRSTRLEN];
 	const char *ans = inet_ntop(AF_INET, &addr, ip, sizeof(ip));
 	if (!ans) {
-		//LOG(FATAL) << "inet_ntop:" << strerror(errno);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "inet_ntop");
-		//todo sleep
-		exit(1);
 	}
 	return std::string(ans);
 }
@@ -228,10 +221,7 @@ std::string Socket::getPeerAddr() const
 	char ip[INET_ADDRSTRLEN];
 	const char *ans = inet_ntop(AF_INET, &peerAddr, ip, sizeof(ip));
 	if (!ans) {
-		//LOG(FATAL) << "inet_ntop:" << strerror(errno);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, "inet_ntop");
-		//todo sleep
-		exit(1);
 	}
 	return std::string(ans);
 }
@@ -253,9 +243,7 @@ int Socket::read(char * buffer, int length)
 int Socket::readAbleNum() {
 	int num;
 	if (ioctl(sockfd, FIONREAD, &num) == -1) {
-		//LOG(FATAL) << "ioctl:" << strerror(errno);
 		Singleton<LogManager>::instance().logInQueue(LogManager::LOG_TYPE::FATAL_LEVEL, std::string("ioctl")+strerror(errno));
-		//todo sleep
 		return 0;
 	}
 	return num;

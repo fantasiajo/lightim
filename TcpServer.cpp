@@ -14,11 +14,10 @@
 #include "Singleton.h"
 #include "LogManager.h"
 
-void TcpServer::init(EventLoop *_ploop,std::string ip, unsigned short port)
-{
-	ploop = _ploop;
-	pAcceptor.reset(new Acceptor(ploop, ip, port));
-	pAcceptor->setNewConnectionCallBack(std::bind(&TcpServer::newConnection,this,std::placeholders::_1));
+TcpServer::TcpServer(EventLoop *_ploop,std::string ip, unsigned short port)
+	:ploop(_ploop),
+	pAcceptor(new Acceptor(_ploop,ip,port)){
+		pAcceptor->setNewConnectionCallBack(std::bind(&TcpServer::newConnection,this,std::placeholders::_1));
 }
 
 void TcpServer::start()
@@ -32,28 +31,6 @@ void TcpServer::newConnection(std::shared_ptr<Socket> pSocket) {
 	pTcpCon->setCloseCallBack(std::bind(&EventLoop::closeConnection, pIoLoop,std::weak_ptr<TcpConnection>(pTcpCon)));
 	pIoLoop->queueInLoop(std::bind(&TcpConnection::connectionEstablished, pTcpCon.get(),pTcpCon));
 }
-
-// void TcpServer::closeConnection(std::weak_ptr<TcpConnection> pTcpConn)
-// {
-// 	tcpConnSet.erase(pTcpConn.lock());
-// }
-
-// void TcpServer::login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn)
-// {
-// 	std::unique_lock<std::shared_mutex> uniquelck(mtxUserMap);
-// 	userMap[id].tmpPTcpConn = pTcpConn;
-// }
-
-// std::weak_ptr<TcpConnection> TcpServer::getConnById(uint32_t id){
-// 	std::shared_lock<std::shared_mutex> lck(mtxUserMap);
-// 	auto it = userMap.find(id);
-// 	if(it == userMap.end()){
-// 		return std::weak_ptr<TcpConnection>();
-// 	}
-// 	else{
-// 		return it->second.tmpPTcpConn;
-// 	}
-// }
 
 void TcpServer::addFriend(uint32_t fromid, uint32_t toid,const Task &confirmCallback)
 { //只有toid所在的线程会调用此函数

@@ -30,7 +30,6 @@ void TcpConnection::connectionEstablished(std::shared_ptr<TcpConnection> pTcpCon
 {
 	pTcpSession.reset(new TcpSession(ploop,this));
 	ploop->addTcpConn(pTcpConn);
-	//pTcpSession->setLoginCallback(std::bind(&TcpServer::login,&Singleton<TcpServer>::instance(), std::placeholders::_1,std::weak_ptr<TcpConnection>(this->shared_from_this())));
 	setMsgCallBack(std::bind(&TcpSession::handleMsg, pTcpSession.get(), pRecvBuf.get()));
 	pIOEM->enableReading();
 }
@@ -43,15 +42,6 @@ void TcpConnection::setMsgCallBack(const std::function<void()> &cb)
 void TcpConnection::setCloseCallBack(const std::function<void()>& cb)
 {
 	closeCallBack = cb;
-}
-
-void TcpConnection::sendInLoop(const char *buf, int len) {
-	if (ploop->isInLoopThread()) {
-		send(buf, len);
-	}
-	else {
-		ploop->queueInLoop(std::bind(&TcpConnection::send, this, buf, len));
-	}
 }
 
 void TcpConnection::send(const char * buf, int len)
@@ -71,15 +61,10 @@ void TcpConnection::sendMsgWithCheck(std::shared_ptr<Msg> pMsg,std::weak_ptr<Tcp
 	send(pMsg->getBuf(), pMsg->getLen());
 }
 
-TcpConnection::~TcpConnection()
-{
-	ploop->deleteIOEM(pIOEM.get());
-}
-
 void TcpConnection::handleRead()
 {
 	auto n = pconfd->readAbleNum();
-	if (n == 0) n = 1;//防止因为n==0导致返回值为0
+	if (n == 0) n = 1;//防止因为n==0导致read返回值为0，其实只有有数据时才会调用此函数，没多大用
 	int cnt = pRecvBuf->readin(pconfd.get(), n);
 	if (cnt > 0) {
 		msgCallBack();

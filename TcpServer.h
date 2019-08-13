@@ -18,23 +18,18 @@ class Msg;
 
 class TcpServer {
 public:
-	// typedef struct {
-	// 	std::weak_ptr<TcpConnection> tmpPTcpConn;
-	// }UserInfo;
 
-	TcpServer(){}
+	TcpServer() = default;
+	TcpServer(EventLoop *_ploop,std::string _ip, unsigned short _port);
 	~TcpServer(){}
 	TcpServer(const TcpServer &) = delete;
 	TcpServer & operator=(const TcpServer &) = delete;
 	TcpServer(TcpServer &&) = delete;
 	TcpServer & operator=(TcpServer &&) = delete;
 
-	void init(EventLoop *_ploop, std::string , unsigned short port);
 	void start();
 
 	void newConnection(std::shared_ptr<Socket> pSocket);
-	void closeConnection(std::weak_ptr<TcpConnection> pTcpConn);
-	void closeConnection_(std::weak_ptr<TcpConnection> pTcpConn);
 
 	void login(uint32_t id, std::weak_ptr<TcpConnection> pTcpConn);
 

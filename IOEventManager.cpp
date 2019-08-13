@@ -12,7 +12,9 @@ IOEventManager::IOEventManager(EventLoop *_ploop, int _fd)
 }
 
 IOEventManager::~IOEventManager() {
-	ploop->deleteIOEM(this);
+	if(type != "TcpConnection"){//因为TcpConnection在close套接字时，会自动从epoll中删除该套接字
+		ploop->deleteIOEM(this);
+	}
 }
 
 int IOEventManager::getfd() {
@@ -79,7 +81,8 @@ void IOEventManager::update() {
 }
 
 void IOEventManager::handleEvent() {
-	//一次只处理一个事件
+	//一次只处理一个事件,防止因为read到0，从而触发handleclose导致TcpConnection被析构
+	//但是有可能导致一直有数据要读而无法写数据
 	if (recvEvents & (EPOLLIN | EPOLLPRI)) {
 		//std::cout << type + " " + ip + ":" << port << std::endl;
 		readCallBack();
