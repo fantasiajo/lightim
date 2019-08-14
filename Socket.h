@@ -12,9 +12,9 @@ public:
 	typedef in_addr IP;
 	typedef in_port_t Port;
 
-	Socket();
+	Socket() = default;
 	Socket(std::string _ip, unsigned short _port);
-	~Socket();
+	~Socket() = default;
 
 	Socket(const Socket &) = delete;
 	Socket &operator= (const Socket &) = delete;
