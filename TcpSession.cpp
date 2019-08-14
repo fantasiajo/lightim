@@ -190,7 +190,7 @@ void TcpSession::handleLoginIn(Buffer *pBuffer)
 			pMsg->writeUint8(SUCCESS);
 			login = true;
 			this->id = id;
-			pTcpConnection->setid(id);
+			//pTcpConnection->setid(id);
 			ploop->setConnById(id,pTcpConnection->shared_from_this());
 			pTcpConnection->sendMsg(pMsg);
 			ploop->getpDM().lock()->getLastMsgId(id,lastRecvMsgId);
@@ -265,7 +265,7 @@ void TcpSession::handleGetFriends(Buffer * pBuffer)
 	pConMsg->writeUint8(Msg::MSG_TYPE::GET_FRIENDS);
 	pTcpConnection->sendMsg(pConMsg);
 
-	//auto id = pBuffer->getUint32();
+	
 	std::vector<std::pair<uint32_t, std::string>> idname;
 	ploop->getpDM().lock()->getFriends(id, idname);
 
@@ -277,6 +277,10 @@ void TcpSession::handleGetFriends(Buffer * pBuffer)
 	}
 	pTcpConnection->sendMsg(pMsg);
 	loadCache(id);
+	if(pTcpConnection->getid()!=0){
+		exit(1);
+	}
+	pTcpConnection->setid(id);
 }
 
 void TcpSession::handleHeartBeat()

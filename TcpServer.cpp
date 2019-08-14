@@ -77,7 +77,7 @@ void TcpServer::agreeFriend(uint32_t fromid, uint32_t toid,const Task &confirmCa
 	pMsg->writeUint64(msgid, Msg::headerLen);
 
 	auto pTcpConn = ploopOfToid->getConnById(toid).lock();
-	if (pTcpConn)
+	if (pTcpConn && pTcpConn->getid()>0)
 	{
 		pTcpConn->sendMsg(pMsg);
 	}
